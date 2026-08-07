@@ -127,23 +127,26 @@ export function makeGlossTexture(size = 512): Texture {
 
   // Broad sheen across the upper half.
   const sheen = ctx.createLinearGradient(0, 0, 0, size);
-  sheen.addColorStop(0, 'rgba(255,255,255,0.4)');
-  sheen.addColorStop(0.42, 'rgba(255,255,255,0.06)');
+  sheen.addColorStop(0, 'rgba(255,255,255,0.62)');
+  sheen.addColorStop(0.42, 'rgba(255,255,255,0.1)');
   sheen.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = sheen;
   ctx.fillRect(0, 0, size, size);
 
-  // Main elliptical highlight, top-left.
+  // Main elliptical highlight, top-left. Blown right out to white in the
+  // middle: the Vista-era "wet plastic" read comes from a highlight that
+  // clips rather than one that politely rolls off.
   ctx.save();
   ctx.translate(r * 0.66, r * 0.55);
   ctx.scale(1, 0.62);
-  const hi = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.5);
-  hi.addColorStop(0, 'rgba(255,255,255,0.95)');
-  hi.addColorStop(0.45, 'rgba(255,255,255,0.5)');
+  const hi = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.56);
+  hi.addColorStop(0, 'rgba(255,255,255,1)');
+  hi.addColorStop(0.34, 'rgba(255,255,255,0.9)');
+  hi.addColorStop(0.62, 'rgba(255,255,255,0.4)');
   hi.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = hi;
   ctx.beginPath();
-  ctx.arc(0, 0, r * 0.5, 0, Math.PI * 2);
+  ctx.arc(0, 0, r * 0.56, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
@@ -168,6 +171,9 @@ export function makeGlossTexture(size = 512): Texture {
  * Volume shading: light pools opposite the key light, giving the drop a sense
  * of thickness that a rim alone can't. No edge darkening - the shader owns the
  * shell - so this can never fight the deforming silhouette.
+ *
+ * Frutiger Aero shadows are never neutral black: the fill light in these
+ * renders is the sky, so the shaded side goes cool blue and stays luminous.
  */
 export function makeShadeTexture(size = 512): Texture {
   const { c, ctx } = canvas(size);
@@ -177,12 +183,26 @@ export function makeShadeTexture(size = 512): Texture {
   ctx.translate(r * 1.24, r * 1.3);
   ctx.scale(1, 0.86);
   const pool = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.82);
-  pool.addColorStop(0, 'rgba(0,18,36,0.34)');
-  pool.addColorStop(0.6, 'rgba(0,18,36,0.14)');
-  pool.addColorStop(1, 'rgba(0,18,36,0)');
+  pool.addColorStop(0, 'rgba(16,74,124,0.24)');
+  pool.addColorStop(0.6, 'rgba(16,74,124,0.1)');
+  pool.addColorStop(1, 'rgba(16,74,124,0)');
   ctx.fillStyle = pool;
   ctx.beginPath();
   ctx.arc(0, 0, r * 0.82, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Bounce light coming back up off the bright water below - the giveaway of
+  // an overexposed, high-key scene rather than a dim one.
+  ctx.save();
+  ctx.translate(r, r * 1.42);
+  ctx.scale(1, 0.5);
+  const bounce = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.7);
+  bounce.addColorStop(0, 'rgba(226,252,255,0.4)');
+  bounce.addColorStop(1, 'rgba(226,252,255,0)');
+  ctx.fillStyle = bounce;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.7, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
@@ -244,14 +264,18 @@ export function makeBubbleTexture(size = 128): Texture {
   const r = size / 2;
   const edge = r * 0.94;
 
-  // Shell: transparent core, bright thin ring right at the boundary.
+  // Shell: transparent core, bright thin ring right at the boundary. The film
+  // is thin enough to split light, so the ring runs through a faint spectrum
+  // instead of staying white - that iridescence is what makes it a soap
+  // bubble rather than a circle.
   const shell = ctx.createRadialGradient(r, r, 0, r, r, edge);
-  shell.addColorStop(0, 'rgba(190,235,255,0.015)');
-  shell.addColorStop(0.6, 'rgba(190,235,255,0.03)');
-  shell.addColorStop(0.86, 'rgba(214,246,255,0.14)');
-  shell.addColorStop(0.955, 'rgba(255,255,255,0.62)');
-  shell.addColorStop(0.99, 'rgba(190,240,255,0.2)');
-  shell.addColorStop(1, 'rgba(190,240,255,0)');
+  shell.addColorStop(0, 'rgba(214,248,255,0.03)');
+  shell.addColorStop(0.6, 'rgba(214,248,255,0.06)');
+  shell.addColorStop(0.8, 'rgba(196,255,246,0.16)');
+  shell.addColorStop(0.89, 'rgba(255,236,190,0.3)');
+  shell.addColorStop(0.945, 'rgba(255,255,255,0.92)');
+  shell.addColorStop(0.975, 'rgba(198,226,255,0.5)');
+  shell.addColorStop(1, 'rgba(214,248,255,0)');
   ctx.fillStyle = shell;
   ctx.fillRect(0, 0, size, size);
 
@@ -259,6 +283,21 @@ export function makeBubbleTexture(size = 128): Texture {
   ctx.beginPath();
   ctx.arc(r, r, edge, 0, Math.PI * 2);
   ctx.clip();
+
+  // Pink/violet swirl across the film, the other half of the interference.
+  ctx.save();
+  ctx.translate(r * 0.5, r * 1.2);
+  ctx.rotate(-0.7);
+  ctx.scale(1, 0.45);
+  const swirl = ctx.createRadialGradient(0, 0, r * 0.15, 0, 0, r * 0.85);
+  swirl.addColorStop(0, 'rgba(255,196,236,0)');
+  swirl.addColorStop(0.55, 'rgba(255,196,236,0.16)');
+  swirl.addColorStop(1, 'rgba(196,214,255,0)');
+  ctx.fillStyle = swirl;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.85, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 
   // Specular cap, up and to the left of centre.
   ctx.save();
@@ -366,6 +405,10 @@ export function makeNoiseTexture(size = 256): Texture {
 /**
  * Underwater caustics: thin bright ridges pulled out of tileable noise by
  * folding it around its midpoint and sharpening what's left.
+ *
+ * Pure white and much stronger than a physically plausible caustic would be.
+ * The whole Frutiger Aero look is built on blown-out white light dancing over
+ * saturated colour, so the crests are pushed until they clip.
  */
 export function makeCausticsTexture(size = 512): Texture {
   const { c, ctx } = canvas(size);
@@ -374,10 +417,11 @@ export function makeCausticsTexture(size = 512): Texture {
   for (let i = 0; i < size * size; i++) {
     const ridge = 1 - Math.abs(n[i]! * 2 - 1);
     // A high exponent leaves only the thin bright crests, which is what reads
-    // as light refracting through a surface rather than as fog.
-    const a = Math.pow(ridge, 12) * 255;
-    img.data[i * 4 + 0] = 190;
-    img.data[i * 4 + 1] = 245;
+    // as light refracting through a surface rather than as a web of lightning
+    // across the whole screen.
+    const a = Math.pow(ridge, 13) * 320;
+    img.data[i * 4 + 0] = 255;
+    img.data[i * 4 + 1] = 255;
     img.data[i * 4 + 2] = 255;
     img.data[i * 4 + 3] = Math.min(255, Math.round(a));
   }
@@ -385,14 +429,23 @@ export function makeCausticsTexture(size = 512): Texture {
   return toTexture(c, { addressMode: 'repeat' });
 }
 
-/** Vertical depth gradient - the water column behind everything else. */
+/**
+ * The sky column behind everything. Not a depth gradient into darkness any
+ * more: this is the Vista wallpaper read, sunlit water at the top rolling down
+ * into saturated tropical turquoise, and it never gets anywhere near black.
+ *
+ * It also never gets anywhere near white. The arena has to stay a mid-value
+ * field, because the drops are the bright objects in this scene and they have
+ * nothing to read against if the water is already blown out.
+ */
 export function makeDepthTexture(height = 512): Texture {
   const { c, ctx } = canvas(4, height);
   const g = ctx.createLinearGradient(0, 0, 0, height);
-  g.addColorStop(0, '#0d5f8f');
-  g.addColorStop(0.28, '#0a4a74');
-  g.addColorStop(0.62, '#06304f');
-  g.addColorStop(1, '#021a2e');
+  g.addColorStop(0, '#8fe6ff');
+  g.addColorStop(0.16, '#63d3f9');
+  g.addColorStop(0.42, '#31b9ef');
+  g.addColorStop(0.7, '#1c9fdd');
+  g.addColorStop(1, '#1187cb');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 4, height);
   return toTexture(c);
@@ -401,7 +454,7 @@ export function makeDepthTexture(height = 512): Texture {
 /** Faint grid used to sell motion across the open water. */
 export function makeGridTexture(size = 256): Texture {
   const { c, ctx } = canvas(size);
-  ctx.strokeStyle = 'rgba(190,240,255,0.10)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(0.5, 0);
@@ -410,6 +463,67 @@ export function makeGridTexture(size = 256): Texture {
   ctx.lineTo(size, 0.5);
   ctx.stroke();
   return toTexture(c, { addressMode: 'repeat' });
+}
+
+/**
+ * God rays. Shafts of sunlight raking down from the surface - the single most
+ * recognisable Frutiger Aero motif after the bubbles.
+ *
+ * Tiles horizontally only. The slant is baked in (a per-row phase shift, which
+ * leaves the pattern periodic in x), and the vertical fade is baked in too, so
+ * the caller stretches exactly one tile over the screen height and repeats
+ * sideways forever.
+ */
+export function makeSunbeamTexture(size = 512): Texture {
+  const { c, ctx } = canvas(size);
+  const img = ctx.createImageData(size, size);
+  // Integer frequencies keep every harmonic seamless across the x wrap.
+  const shafts = [
+    { freq: 3, amp: 1, phase: 0 },
+    { freq: 5, amp: 0.55, phase: 1.9 },
+    { freq: 8, amp: 0.32, phase: 4.1 },
+    { freq: 13, amp: 0.16, phase: 2.4 },
+  ];
+
+  for (let y = 0; y < size; y++) {
+    const v = y / size;
+    // Bright at the surface, gone before the bottom of the screen.
+    const fade = Math.pow(1 - smoothstep(0, 0.82, v), 1.6);
+    // Rays lean as they descend, the way they do under a rippled surface.
+    const slant = v * 0.55;
+    for (let x = 0; x < size; x++) {
+      const u = x / size + slant;
+      let n = 0;
+      for (const s of shafts) n += Math.sin((u * s.freq + s.phase) * Math.PI * 2) * s.amp;
+      // Fold to positive and sharpen: broad soft shafts, not a sine wash.
+      const beam = Math.pow(Math.max(0, n / 2.03) , 2.2);
+      const i = (y * size + x) * 4;
+      img.data[i] = 255;
+      img.data[i + 1] = 255;
+      img.data[i + 2] = 255;
+      img.data[i + 3] = Math.min(255, Math.round(beam * fade * 255));
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return toTexture(c, { addressMode: 'repeat' });
+}
+
+/**
+ * Sun bloom hanging just above the top of the screen - the light source the
+ * god rays and the caustics are supposedly coming from.
+ */
+export function makeSunGlowTexture(size = 512): Texture {
+  const { c, ctx } = canvas(size);
+  const r = size / 2;
+  const g = ctx.createRadialGradient(r, r, 0, r, r, r);
+  g.addColorStop(0, 'rgba(255,255,255,0.95)');
+  g.addColorStop(0.18, 'rgba(255,255,255,0.6)');
+  g.addColorStop(0.42, 'rgba(226,250,255,0.24)');
+  g.addColorStop(0.72, 'rgba(196,240,255,0.07)');
+  g.addColorStop(1, 'rgba(180,232,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  return toTexture(c);
 }
 
 export interface TextureSet {
@@ -424,6 +538,8 @@ export interface TextureSet {
   caustics: Texture;
   depth: Texture;
   grid: Texture;
+  sunbeam: Texture;
+  sunGlow: Texture;
 }
 
 export function buildTextures(): TextureSet {
@@ -439,5 +555,7 @@ export function buildTextures(): TextureSet {
     caustics: makeCausticsTexture(),
     depth: makeDepthTexture(),
     grid: makeGridTexture(),
+    sunbeam: makeSunbeamTexture(),
+    sunGlow: makeSunGlowTexture(),
   };
 }

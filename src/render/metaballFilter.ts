@@ -30,7 +30,8 @@ uniform float uCenterAlpha;
 uniform float uEdgeAlpha;
 uniform float uRimDepth;
 uniform float uEdgeDarken;
-uniform float uRimLight;
+uniform float uRimLift;
+uniform float uBodyLift;
 
 void main()
 {
@@ -45,8 +46,14 @@ void main()
     float alpha = mix(uEdgeAlpha, uCenterAlpha, depth) * mask;
     vec3 color = rgb * mix(uEdgeDarken, 1.0, depth);
 
+    // Wash the whole body toward white. Everything in this palette is lit from
+    // the sky as well as the key, so nothing is allowed to sit at full
+    // saturation - that lift is the difference between a candy-glass drop and
+    // a flat coloured circle.
+    color = mix(color, vec3(1.0), uBodyLift);
+
     float rim = 1.0 - smoothstep(0.0, 0.35, depth);
-    color += vec3(rim * rim * uRimLight);
+    color += vec3(rim * rim * uRimLift);
 
     finalColor = vec4(color * alpha, alpha);
 }
@@ -60,6 +67,7 @@ export interface MetaballFilterOptions {
   rimDepth: number;
   edgeDarken: number;
   rimLight: number;
+  bodyLift: number;
 }
 
 interface MetaballUniforms {
@@ -69,7 +77,8 @@ interface MetaballUniforms {
   uEdgeAlpha: number;
   uRimDepth: number;
   uEdgeDarken: number;
-  uRimLight: number;
+  uRimLift: number;
+  uBodyLift: number;
 }
 
 export class MetaballFilter extends Filter {
@@ -88,7 +97,8 @@ export class MetaballFilter extends Filter {
           uEdgeAlpha: { value: options.edgeAlpha, type: 'f32' },
           uRimDepth: { value: options.rimDepth, type: 'f32' },
           uEdgeDarken: { value: options.edgeDarken, type: 'f32' },
-          uRimLight: { value: options.rimLight, type: 'f32' },
+          uRimLift: { value: options.rimLight, type: 'f32' },
+          uBodyLift: { value: options.bodyLift, type: 'f32' },
         },
       },
     });

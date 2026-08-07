@@ -40,11 +40,15 @@ export class Minimap {
     const sy = size / WORLD.height;
 
     ctx.clearRect(0, 0, size, size);
-    ctx.fillStyle = 'rgba(4, 32, 54, 0.55)';
+    // Radar water, matching the bright arena rather than a dark tactical map.
+    const water = ctx.createLinearGradient(0, 0, 0, size);
+    water.addColorStop(0, 'rgba(196, 243, 255, 0.72)');
+    water.addColorStop(1, 'rgba(90, 199, 240, 0.72)');
+    ctx.fillStyle = water;
     ctx.fillRect(0, 0, size, size);
 
     // Camera viewport rectangle.
-    ctx.strokeStyle = 'rgba(216, 251, 255, 0.35)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.lineWidth = 1;
     ctx.strokeRect(
       (camX - viewHalfW) * sx,
@@ -56,7 +60,7 @@ export class Minimap {
     for (const drop of world.drops) {
       if (!drop.alive || drop.isPlayer) continue;
       const r = Math.max(1.4, drop.radius * sx * 1.6);
-      ctx.fillStyle = colorToCss(findColor(drop.colorId).tint, 0.7);
+      ctx.fillStyle = colorToCss(findColor(drop.colorId).tint, 0.95);
       ctx.beginPath();
       ctx.arc(drop.x * sx, drop.y * sy, r, 0, Math.PI * 2);
       ctx.fill();
@@ -69,8 +73,8 @@ export class Minimap {
       ctx.beginPath();
       ctx.arc(player.x * sx, player.y * sy, r, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(0, 40, 70, 0.8)';
-      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = 'rgba(8, 62, 100, 0.9)';
+      ctx.lineWidth = 1.4;
       ctx.stroke();
     }
   }
