@@ -13,6 +13,8 @@ interface Bubble {
   drift: number;
   phase: number;
   parallax: number;
+  spin: number;
+  isSparkle: boolean;
 }
 
 const BUBBLE_COUNT = 96;
@@ -46,11 +48,11 @@ export class Background {
     this.sunGlow = new Sprite(textures.sunGlow);
     this.sunGlow.anchor.set(0.5);
     this.sunGlow.blendMode = 'add';
-    this.sunGlow.alpha = 0.26;
+    this.sunGlow.alpha = 0;
 
     this.beams = new TilingSprite({ texture: textures.sunbeam, width: 1, height: 1 });
     this.beams.blendMode = 'add';
-    this.beams.alpha = 0.2;
+    this.beams.alpha = 0.1;
 
     this.grid = new TilingSprite({ texture: textures.grid, width: 1, height: 1 });
     this.grid.alpha = 0.5;
@@ -67,12 +69,15 @@ export class Background {
     this.causticsB.tint = 0xd8fbff;
 
     for (let i = 0; i < BUBBLE_COUNT; i++) {
-      const sprite = new Sprite(textures.bubble);
+      const isSparkle = i < 20; // 20 sparkles, rest bubbles
+      const sprite = new Sprite(isSparkle ? textures.sparkle : textures.bubble);
       sprite.anchor.set(0.5);
-      // Normal blending, not additive: over bright water an additive bubble is
+      if (isSparkle) sprite.blendMode = 'add';
+      
+      // Normal blending for bubbles, not additive: over bright water an additive bubble is
       // just a pale smudge, where a real film reads as a crisp shell.
       this.bubbleLayer.addChild(sprite);
-      this.bubbles.push(this.makeBubble(sprite, true));
+      this.bubbles.push(this.makeBubble(sprite, true, isSparkle));
     }
 
     this.container.addChild(
@@ -86,17 +91,19 @@ export class Background {
     );
   }
 
-  private makeBubble(sprite: Sprite, initial: boolean): Bubble {
+  private makeBubble(sprite: Sprite, initial: boolean, isSparkle: boolean = false): Bubble {
     const parallax = this.rng.range(0.25, 0.9);
     return {
       sprite,
       x: this.rng.range(-60, this.width + 60),
       y: initial ? this.rng.range(-40, this.height + 40) : this.height + this.rng.range(20, 160),
-      size: this.rng.range(6, 40) * (0.6 + parallax * 0.7),
-      speed: this.rng.range(18, 62) * (0.5 + parallax),
+      size: this.rng.range(6, 40) * (0.6 + parallax * 0.7) * (isSparkle ? 1.5 : 1),
+      speed: this.rng.range(18, 62) * (0.5 + parallax) * (isSparkle ? 0.4 : 1),
       drift: this.rng.range(-14, 14),
       phase: this.rng.range(0, Math.PI * 2),
       parallax,
+      spin: isSparkle ? this.rng.range(-0.5, 0.5) : 0,
+      isSparkle,
     };
   }
 
@@ -158,16 +165,22 @@ export class Background {
     for (const bubble of this.bubbles) {
       bubble.y -= bubble.speed * dt;
       bubble.x += Math.sin(time * 0.9 + bubble.phase) * bubble.drift * dt;
+      bubble.sprite.rotation += bubble.spin * dt;
       if (bubble.y < -60) {
         const sprite = bubble.sprite;
-        Object.assign(bubble, this.makeBubble(sprite, false));
+        Object.assign(bubble, this.makeBubble(sprite, false, bubble.isSparkle));
       }
       const px = bubble.x - camera.x * camera.scale * bubble.parallax * 0.12;
       const py = bubble.y - camera.y * camera.scale * bubble.parallax * 0.12;
       bubble.sprite.position.set(wrap(px, this.width), py);
       bubble.sprite.width = bubble.size;
       bubble.sprite.height = bubble.size;
-      bubble.sprite.alpha = 0.42 + bubble.parallax * 0.45;
+      
+      if (bubble.isSparkle) {
+        bubble.sprite.alpha = 0.3 + bubble.parallax * 0.4;
+      } else {
+        bubble.sprite.alpha = 0.08 + bubble.parallax * 0.15;
+      }
     }
   }
 

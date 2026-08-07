@@ -526,6 +526,29 @@ export function makeSunGlowTexture(size = 512): Texture {
   return toTexture(c);
 }
 
+/** Frutiger Aero 4-pointed sparkle, adding a glassy aesthetic. */
+export function makeSparkleTexture(size = 128): Texture {
+  const { c, ctx } = canvas(size);
+  const r = size / 2;
+  
+  const g = ctx.createRadialGradient(r, r, 0, r, r, r);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(0.1, 'rgba(255,255,255,0.8)');
+  g.addColorStop(0.4, 'rgba(180,240,255,0.4)');
+  g.addColorStop(1, 'rgba(180,240,255,0)');
+  
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.quadraticCurveTo(r, r, size, r);
+  ctx.quadraticCurveTo(r, r, r, size);
+  ctx.quadraticCurveTo(r, r, 0, r);
+  ctx.quadraticCurveTo(r, r, r, 0);
+  ctx.fill();
+  
+  return toTexture(c);
+}
+
 export interface TextureSet {
   blob: Texture;
   gloss: Texture;
@@ -540,6 +563,7 @@ export interface TextureSet {
   grid: Texture;
   sunbeam: Texture;
   sunGlow: Texture;
+  sparkle: Texture;
 }
 
 export function buildTextures(): TextureSet {
@@ -557,5 +581,6 @@ export function buildTextures(): TextureSet {
     grid: makeGridTexture(),
     sunbeam: makeSunbeamTexture(),
     sunGlow: makeSunGlowTexture(),
+    sparkle: makeSparkleTexture(),
   };
 }
