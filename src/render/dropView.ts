@@ -8,10 +8,14 @@ import { SoftBody } from './softBody';
 import type { TextureSet } from './textures';
 
 /**
- * One drop, split across three render layers:
+ * One drop, split across four render layers:
  *
  *  - `lens` feeds the refraction pass below everything, bending the water and
  *    caustics behind the drop like a magnifier;
+ *  - `shadow` sits under the liquid pass, a soft blue pool offset down-right
+ *    from the fixed key light. It is what plants the drop *in* the water
+ *    instead of leaving it floating as a decal over it, and it is most of what
+ *    keeps a pale drop legible against pale water;
  *  - `body` is a spring-driven soft-body mesh living in the metaball container
  *    (displacement -> blur -> glass threshold), so silhouettes wobble like a
  *    water balloon and fuse into liquid bridges when drops touch;
@@ -23,6 +27,7 @@ export class DropView {
   readonly body: Mesh;
   readonly overlay: Container;
   readonly lens: Sprite;
+  readonly shadow: Sprite;
 
   private soft: SoftBody;
   private shade: Sprite;
@@ -50,11 +55,16 @@ export class DropView {
     this.lens = new Sprite(textures.lens);
     this.lens.anchor.set(0.5);
 
+    this.shadow = new Sprite(textures.glow);
+    this.shadow.anchor.set(0.5);
+    this.shadow.tint = 0x0a5f96;
+    this.shadow.alpha = RENDER.shadowAlpha;
+
     this.overlay = new Container();
 
     this.shade = new Sprite(textures.shade);
     this.shade.anchor.set(0.5);
-    this.shade.alpha = 0.55;
+    this.shade.alpha = 0.42;
 
     this.gloss = new Sprite(textures.gloss);
     this.gloss.anchor.set(0.5);
@@ -92,6 +102,7 @@ export class DropView {
     this.body.visible = visible;
     this.overlay.visible = visible;
     this.lens.visible = visible;
+    this.shadow.visible = visible;
   }
 
   update(drop: Drop, dt: number, time: number, cameraScale: number): void {
@@ -119,6 +130,16 @@ export class DropView {
     this.lens.width = r * 2 * swell;
     this.lens.height = r * 2 * swell;
 
+    // --- Contact shadow. Offset down-right to match the fixed top-left key,
+    // and drawn generously wide because the falloff texture is mostly feather.
+    const shadowSize = r * 2 * swell * RENDER.shadowScale * 1.9;
+    this.shadow.position.set(
+      drop.x + r * RENDER.shadowOffset,
+      drop.y + r * RENDER.shadowOffset,
+    );
+    this.shadow.width = shadowSize;
+    this.shadow.height = shadowSize;
+
     // --- Crisp pass. Highlights track the body's size but never its rotation:
     // the key light is fixed, which is what keeps a stretched, wobbling drop
     // reading as glass rather than a decal.
@@ -132,7 +153,9 @@ export class DropView {
     this.gloss.width = size;
     this.gloss.height = size;
     this.gloss.tint = color.accent;
-    this.gloss.alpha = 0.85;
+    // Short of full strength: the highlight should sit on the body colour, not
+    // bleach it. Small drops are almost entirely highlight otherwise.
+    this.gloss.alpha = 0.78;
 
     this.flash.width = size * 2.6;
     this.flash.height = size * 2.6;
@@ -212,6 +235,7 @@ export class DropView {
   destroy(): void {
     this.soft.destroy();
     this.lens.destroy();
+    this.shadow.destroy();
     this.overlay.destroy({ children: true });
   }
 }

@@ -41,8 +41,10 @@ export function labelTexture(text: string): Texture {
   ctx.lineJoin = 'round';
   ctx.miterLimit = 2;
 
+  // A deep marine outline rather than black: pure black is the one value that
+  // never appears anywhere else in this palette and it shows.
   ctx.lineWidth = 3.5;
-  ctx.strokeStyle = 'rgba(0,0,0,0.92)';
+  ctx.strokeStyle = 'rgba(5,52,86,0.94)';
   ctx.strokeText(text, width / 2, HEIGHT / 2 + 0.5);
 
   ctx.fillStyle = '#ffffff';

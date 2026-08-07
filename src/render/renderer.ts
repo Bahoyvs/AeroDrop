@@ -47,6 +47,7 @@ export class GameRenderer {
   private worldLayer = new Container();
   private borderGfx = new Graphics();
   private pelletLayer = new Container();
+  private shadowLayer = new Container();
   private metaLayer = new Container();
   private overlayLayer = new Container();
 
@@ -70,7 +71,7 @@ export class GameRenderer {
     await this.app.init({
       resizeTo: host,
       antialias: true,
-      background: 0x021a2e,
+      background: 0x5cd6fb,
       // The metaball threshold is a hand-written GLSL filter, and the brief
       // targets WebGL, so pin the backend instead of letting WebGPU win.
       preference: 'webgl',
@@ -110,6 +111,7 @@ export class GameRenderer {
       rimDepth: RENDER.rimDepth,
       edgeDarken: RENDER.edgeDarken,
       rimLight: RENDER.rimLight,
+      bodyLift: RENDER.bodyLift,
     });
     this.metaLayer.filters = [this.displacementFilter, this.blurFilter, this.metaFilter];
 
@@ -129,9 +131,13 @@ export class GameRenderer {
     });
     this.background.container.filters = [this.refractionFilter];
 
+    // Shadows go in their own layer under the liquid: anything added to the
+    // metaball container instead would get blurred and thresholded into the
+    // surface itself and come out as part of the drop.
     this.worldLayer.addChild(
       this.borderGfx,
       this.pelletLayer,
+      this.shadowLayer,
       this.metaLayer,
       this.overlayLayer,
       this.fx.container,
@@ -163,24 +169,27 @@ export class GameRenderer {
     const g = this.borderGfx;
     g.clear();
 
-    // Darken everything outside the arena. The background is drawn in screen
-    // space, so without this the water past the wall looks identical to the
-    // playfield and the boundary reads as a stray line.
+    // Everything outside the arena washes out into bright haze. The background
+    // is drawn in screen space, so without this the water past the wall looks
+    // identical to the playfield and the boundary reads as a stray line.
+    // Fogging out rather than darkening keeps the scene high-key throughout.
     const pad = 6000;
-    const outside = 0x02101e;
-    const alpha = 0.55;
+    const outside = 0xf2ffff;
+    const alpha = 0.62;
     g.rect(-pad, -pad, WORLD.width + pad * 2, pad).fill({ color: outside, alpha });
     g.rect(-pad, WORLD.height, WORLD.width + pad * 2, pad).fill({ color: outside, alpha });
     g.rect(-pad, 0, pad, WORLD.height).fill({ color: outside, alpha });
     g.rect(WORLD.width, 0, pad, WORLD.height).fill({ color: outside, alpha });
 
+    // Three concentric strokes make a glassy Aero bezel: a saturated core
+    // between a white outer highlight and a white inner one.
     const inset = 6;
-    g.roundRect(inset, inset, WORLD.width - inset * 2, WORLD.height - inset * 2, 48);
-    g.stroke({ width: 10, color: 0x7fe9ff, alpha: 0.45 });
     g.roundRect(0, 0, WORLD.width, WORLD.height, 54);
-    g.stroke({ width: 26, color: 0x0a3352, alpha: 0.55 });
+    g.stroke({ width: 26, color: 0xffffff, alpha: 0.75 });
+    g.roundRect(inset, inset, WORLD.width - inset * 2, WORLD.height - inset * 2, 48);
+    g.stroke({ width: 10, color: 0x21a9e8, alpha: 0.55 });
     g.roundRect(inset * 3, inset * 3, WORLD.width - inset * 6, WORLD.height - inset * 6, 40);
-    g.stroke({ width: 2, color: 0xd8fbff, alpha: 0.3 });
+    g.stroke({ width: 3, color: 0xffffff, alpha: 0.85 });
   }
 
   // ------------------------------------------------------------------ world
@@ -203,6 +212,7 @@ export class GameRenderer {
   private addView(drop: Drop): DropView {
     const view = new DropView(this.textures, this.itemTextures);
     view.reset(drop.name);
+    this.shadowLayer.addChild(view.shadow);
     this.metaLayer.addChild(view.body);
     this.overlayLayer.addChild(view.overlay);
     this.lensLayer.addChild(view.lens);
@@ -309,7 +319,7 @@ export class GameRenderer {
       sprite.width = size;
       sprite.height = size;
       sprite.tint = pellet.tint;
-      sprite.alpha = pellet.ejecta ? 0.95 : 0.82;
+      sprite.alpha = pellet.ejecta ? 1 : 0.95;
     }
   }
 

@@ -120,16 +120,26 @@ export const RENDER = {
    * Glass shading, all derived in the threshold shader from the blurred field,
    * so it follows the *merged* liquid surface rather than each circle.
    */
-  // Opacity in the middle of a drop, where you should see the water behind it.
-  centerAlpha: 0.66,
+  /**
+   * Opacity in the middle of a drop. High: against bright water a see-through
+   * drop simply disappears, and the reference look is solid coloured gel with
+   * light playing over it, not tinted glass.
+   */
+  centerAlpha: 0.88,
   // Opacity at the shell, where refraction piles the light up.
-  edgeAlpha: 0.97,
+  edgeAlpha: 0.99,
   /** How far in the shell reaches, as a fraction of the field ramp. */
-  rimDepth: 0.42,
-  /** How much the shell darkens the body colour. */
-  edgeDarken: 0.68,
+  rimDepth: 0.4,
+  /** How much the shell darkens the body colour - the containing outline. */
+  edgeDarken: 0.76,
   /** Strength of the bright line riding the outer surface. */
-  rimLight: 0.3,
+  rimLight: 0.38,
+  /** Lift applied to the whole body - washes the colour toward the sky. */
+  bodyLift: 0.04,
+  /** Contact shadow cast on the water: size multiple, offset and opacity. */
+  shadowScale: 1.12,
+  shadowOffset: 0.16,
+  shadowAlpha: 0.3,
 
   /** Max background displacement under a drop, in screen pixels. */
   refractionScale: 34,
