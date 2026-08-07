@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="description" content="AeroDrop.io - grow your drop, swallow the rest. A Frutiger Aqua .io game." />
+    <meta name="theme-color" content="#021a2e" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='g' cx='36%25' cy='30%25'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='0.45' stop-color='%237fe9ff'/%3E%3Cstop offset='1' stop-color='%231a86d8'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='17' r='13' fill='url(%23g)'/%3E%3Cellipse cx='11' cy='11' rx='4' ry='2.6' fill='%23ffffff' opacity='0.85'/%3E%3C/svg%3E"
+    />
+    <title>AeroDrop.io</title>
+  </head>
+  <body>
+    <div id="app">
+      <div id="stage"></div>
+      <div id="vignette"></div>
+
+      <!-- ------------------------------------------------------------ HUD -->
+      <div id="hud" class="layer hud hidden" aria-hidden="true">
+        <div class="hud-top-left">
+          <div class="glass panel stat-panel">
+            <div class="stat">
+              <span class="stat-label">MASS</span>
+              <span class="stat-value" id="hudMass">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">RANK</span>
+              <span class="stat-value" id="hudRank">-</span>
+            </div>
+          </div>
+          <div class="glass panel boost-panel">
+            <div class="boost-label">JET BOOST</div>
+            <div class="boost-meter"><div class="boost-fill" id="boostFill"></div></div>
+            <div class="boost-hint">SPACE / RIGHT CLICK &mdash; costs 3% mass</div>
+          </div>
+        </div>
+
+        <div class="hud-top-center">
+          <div class="glass panel timer-panel">
+            <span class="timer-label">TIME</span>
+            <span class="timer-value" id="hudTimer">5:00</span>
+          </div>
+        </div>
+
+        <div class="hud-top-right">
+          <div class="glass panel board-panel">
+            <div class="board-title">LEADERBOARD</div>
+            <ol class="board-list" id="leaderboard"></ol>
+          </div>
+        </div>
+
+        <div class="hud-bottom-left">
+          <div class="glass panel minimap-panel">
+            <canvas id="minimap" width="132" height="132"></canvas>
+          </div>
+        </div>
+
+        <div class="hud-bottom-right">
+          <button class="aqua-btn round boost-btn" id="boostBtn" type="button" aria-label="Jet Boost">
+            <span class="boost-icon">&#9650;</span>
+            <span class="boost-text">BOOST</span>
+          </button>
+        </div>
+
+        <div class="killfeed" id="killfeed" aria-live="polite"></div>
+      </div>
+
+      <!-- ---------------------------------------------------------- LOBBY -->
+      <div id="lobby" class="layer center-layer">
+        <div class="glass window lobby-window">
+          <div class="window-glare"></div>
+          <header class="brand">
+            <h1 class="logo">
+              <span class="logo-aero">Aero</span><span class="logo-drop">Drop</span><span class="logo-io">.io</span>
+            </h1>
+            <p class="tagline">Grow your drop. Swallow the rest.</p>
+          </header>
+
+          <div class="field">
+            <label class="field-label" for="nameInput">PLAYER NAME</label>
+            <input
+              id="nameInput"
+              class="aqua-input"
+              type="text"
+              maxlength="14"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="CoolBoy99"
+            />
+          </div>
+
+          <div class="field">
+            <span class="field-label">DROP COLOR</span>
+            <div class="swatch-row" id="colorRow"></div>
+          </div>
+
+          <div class="field">
+            <span class="field-label">CORE ITEM</span>
+            <div class="swatch-row" id="itemRow"></div>
+          </div>
+
+          <div class="lobby-actions">
+            <button class="aqua-btn primary big" id="playBtn" type="button">PLAY</button>
+            <button class="aqua-btn reward" id="boostStartBtn" type="button">
+              <span class="reward-badge">AD</span>
+              <span class="btn-stack">
+                <strong>AERO DROP BOOST</strong>
+                <small>Start the round at double mass</small>
+              </span>
+            </button>
+          </div>
+
+          <div class="lobby-footer">
+            <button class="aqua-btn small" id="shopBtn" type="button">SHOP</button>
+            <button class="aqua-btn small" id="helpBtn" type="button">HOW TO PLAY</button>
+            <button class="aqua-btn small icon" id="muteBtn" type="button" aria-label="Toggle sound">
+              <span id="muteIcon">&#9835;</span>
+            </button>
+          </div>
+
+          <div class="best-line">
+            Best mass <strong id="bestMass">0</strong> &middot; Best rank
+            <strong id="bestRank">-</strong> &middot; Rounds <strong id="gamesPlayed">0</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- ----------------------------------------------------------- HELP -->
+      <div id="help" class="layer center-layer hidden">
+        <div class="glass window help-window">
+          <div class="window-glare"></div>
+          <h2 class="window-title">HOW TO PLAY</h2>
+          <ul class="help-list">
+            <li><strong>Move</strong> &mdash; your drop follows the cursor (or drag on touch, or WASD).</li>
+            <li><strong>Eat</strong> &mdash; absorb molecules and any drop at least 10% smaller than you.</li>
+            <li><strong>Jet Boost</strong> &mdash; Space, right click, or double tap. Dashes you forward and
+              throws 3% of your mass out behind you. Use it to catch prey or to escape.</li>
+            <li><strong>Weight</strong> &mdash; the bigger you get, the slower and heavier you move.</li>
+            <li><strong>Round</strong> &mdash; five minutes. Finish as high on the leaderboard as you can.</li>
+          </ul>
+          <button class="aqua-btn primary" id="helpCloseBtn" type="button">GOT IT</button>
+        </div>
+      </div>
+
+      <!-- ----------------------------------------------------------- SHOP -->
+      <div id="shop" class="layer center-layer hidden">
+        <div class="glass window shop-window">
+          <div class="window-glare"></div>
+          <h2 class="window-title">COSMETICS</h2>
+          <p class="window-sub">Watch a short ad to unlock a colour or a core item forever.</p>
+
+          <h3 class="shop-heading">DROP COLOURS</h3>
+          <div class="shop-grid" id="shopColors"></div>
+
+          <h3 class="shop-heading">CORE ITEMS</h3>
+          <div class="shop-grid" id="shopItems"></div>
+
+          <button class="aqua-btn primary" id="shopCloseBtn" type="button">BACK</button>
+        </div>
+      </div>
+
+      <!-- ---------------------------------------------------------- DEATH -->
+      <div id="death" class="layer center-layer hidden">
+        <div class="glass window death-window">
+          <div class="window-glare"></div>
+          <h2 class="window-title danger">ABSORBED</h2>
+          <p class="death-line">Swallowed by <strong id="killerName">someone bigger</strong></p>
+          <div class="death-stats">
+            <div class="death-stat"><span>MASS</span><strong id="deathMass">0</strong></div>
+            <div class="death-stat"><span>RANK</span><strong id="deathRank">-</strong></div>
+          </div>
+          <div class="death-actions">
+            <button class="aqua-btn reward big" id="reviveBtn" type="button">
+              <span class="reward-badge">AD</span>
+              <span class="btn-stack">
+                <strong>SECOND CHANCE</strong>
+                <small id="reviveSub">Revive with 50% of your mass</small>
+              </span>
+            </button>
+            <button class="aqua-btn primary" id="deathPlayBtn" type="button">PLAY AGAIN</button>
+            <button class="aqua-btn small" id="deathLobbyBtn" type="button">BACK TO LOBBY</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- -------------------------------------------------------- RESULTS -->
+      <div id="results" class="layer center-layer hidden">
+        <div class="glass window results-window">
+          <div class="window-glare"></div>
+          <h2 class="window-title">ROUND OVER</h2>
+          <div class="result-rank">
+            <span class="result-rank-label">FINAL RANK</span>
+            <span class="result-rank-value" id="resultRank">#1</span>
+          </div>
+          <ol class="board-list final" id="resultBoard"></ol>
+          <div class="result-actions">
+            <button class="aqua-btn primary big" id="resultPlayBtn" type="button">PLAY AGAIN</button>
+            <button class="aqua-btn small" id="resultLobbyBtn" type="button">LOBBY</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ------------------------------------------------------------- AD -->
+      <div id="adOverlay" class="layer center-layer hidden">
+        <div class="ad-box">
+          <div class="ad-title" id="adTitle">Sponsor message</div>
+          <div class="ad-sub">Your reward unlocks when this finishes</div>
+          <div class="ad-meter"><div class="ad-fill" id="adFill"></div></div>
+          <div class="ad-note">Local preview &mdash; a real ad plays on CrazyGames</div>
+        </div>
+      </div>
+
+      <!-- -------------------------------------------------------- LOADING -->
+      <div id="loading" class="layer center-layer">
+        <div class="loading-box">
+          <div class="loading-drop"></div>
+          <p class="loading-text">Filling the tank&hellip;</p>
+        </div>
+      </div>
+
+      <div class="toast" id="toast" aria-live="polite"></div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

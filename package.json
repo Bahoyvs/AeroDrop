@@ -1,0 +1,20 @@
+{
+  "name": "aerodrop-io",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AeroDrop.io - casual .io mass-growing browser game with Frutiger Aqua aesthetics",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pixi.js": "^8.19.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "vite": "^7.1.0"
+  }
+}
