@@ -81,21 +81,158 @@ AeroDrop.io’nun kimliği:
 
 ---
 
-## 🚧 Proje Durumu
+## 🚀 Kurulum ve Çalıştırma
 
-Bu repo, AeroDrop.io’nun aktif geliştirme sürecini içerir.  
-Mekanikler, denge ayarları, bot davranışları ve görsel dil iteratif olarak geliştirilmektedir.
+Gereksinim: Node.js 20+
+
+```bash
+npm install
+npm run dev        # http://localhost:5173 - hot reload
+npm run build      # tip kontrolü + dist/ üretimi
+npm run preview    # dist/ klasörünü yerelde servis eder
+npm run typecheck  # sadece tsc --noEmit
+```
+
+Oyun tamamen istemci taraflıdır: sunucu, backend veya harici asset yoktur.
+`dist/` klasörü doğrudan statik hosting'e (veya CrazyGames zip'ine) konulabilir.
+`vite.config.ts` içinde `base: './'` ayarlıdır, bu yüzden alt klasörden servis
+edilmesi sorun çıkarmaz.
 
 ---
 
-## 📌 Yol Haritası (Örnek)
+## 🎮 Kontroller
 
-- [ ] Çekirdek hareket + su fiziği iyileştirmeleri  
-- [ ] Jet Boost dengeleme (cooldown / risk parametreleri)  
-- [ ] Bot AI davranış çeşitliliği  
-- [ ] UI polish (Aero skeuomorphic pass)  
-- [ ] Performans optimizasyonu (WebGL / düşük donanım profilleri)  
-- [ ] CrazyGames yayın hazırlığı (SDK, analytics, build pipeline)
+| Aksiyon | Masaüstü | Mobil |
+| --- | --- | --- |
+| Hareket | Fare imleci (veya WASD / ok tuşları) | Ekrana dokun ve sürükle |
+| Jet Boost | `Space` veya sağ tık | `BOOST` düğmesi veya çift dokunuş |
+
+İmlecin damlaya olan uzaklığı gaz pedalı gibi çalışır: küçük hareketler hassas
+kontrol, ekranın öbür ucuna atılan bir hamle tam hız verir.
+
+---
+
+## 🗂️ Proje Yapısı
+
+```
+index.html            Oyun kabuğu + tüm UI markup'ı (lobi, HUD, mağaza, ölüm, sonuç)
+src/
+  main.ts             Boot: SDK + WebGL başlatma, UI callback'lerini bağlama, ticker
+  style.css           Frutiger Aqua / skeuomorfik arayüz
+  core/
+    config.ts         TÜM denge sayıları tek dosyada (dünya, kütle, hız, boost, bot, reklam)
+    math.ts           clamp / lerp / frame-rate bağımsız damp / format yardımcıları
+    rng.ts            Deterministik mulberry32 PRNG
+  game/
+    world.ts          Simülasyon: fizik, çarpışma, yem grid'i, spawn, leaderboard
+    entities.ts       Drop / Pellet veri modelleri
+    bot.ts            Steering AI (yem ara / kaç / boost ile saldır)
+    game.ts           Maç akışı; simülasyon, render, UI ve reklamlar arasındaki tutkal
+    input.ts          Fare + klavye + dokunmatik, tek bir boost mandalında birleşir
+    cosmetics.ts      Renk ve çekirdek eşya kataloğu
+    names.ts          Retro bot isimleri + oyuncu ismi temizleme
+  render/
+    renderer.ts       PixiJS uygulaması ve hibrit sıvı render hattı
+    metaballFilter.ts Renk koruyan alpha threshold shader'ı (metaball birleşmesi)
+    dropView.ts       Damla görseli: silüet + specular + çekirdek eşya + isim etiketi
+    textures.ts       Tüm dokular runtime'da canvas ile üretilir (harici PNG yok)
+    innerItems.ts     Çekirdek eşya ikonları (vektörden dokuya bake edilir)
+    background.ts     Derinlik gradyanı, caustics, grid, yükselen baloncuklar
+    camera.ts         Kütleye göre yumuşak zoom-out
+    fx.ts             Havuzlanmış additive partiküller
+    labels.ts         Piksel görünümlü isim etiketleri (nearest-neighbour upscale)
+  ui/
+    ui.ts             Tüm DOM etkileşimi; simülasyon hiçbir elemente dokunmaz
+    minimap.ts        2D canvas radar
+  audio/sfx.ts        WebAudio ile sentezlenen sesler (ses dosyası yok)
+  platform/crazygames.ts  CrazyGames SDK v3 sarmalayıcısı + yerel yedek
+  save.ts             localStorage profili (kozmetikler, rekorlar, ses tercihi)
+```
+
+---
+
+## 🧪 Teknik Mimari
+
+### Hibrit sıvı render (3 katman)
+
+Damlalar iki ayrı katmanda çizilir:
+
+1. **Metaball katmanı** — her damlanın silüeti tek bir `Container` içinde toplanır
+   ve sırayla `DisplacementFilter` (jöle titremesi) → `BlurFilter` → alpha
+   threshold uygulanır. Damlalar yaklaştığında bulanık alfa alanları toplanır ve
+   eşiği aştığı yerde **sıvı köprüsü** oluşur.
+2. **Keskin katman** — specular highlight, iç gölge, çekirdek eşya ve isim
+   etiketi filtresiz olarak üstte çizilir. Işık yönü sabit kalır; damla hız
+   yönünde esnerken bile cam hissi bozulmaz.
+
+Threshold için PixiJS'in hazır `ColorMatrixFilter`'ı kullanılmadı: o shader
+sonucu yükseltilmiş alfa ile yeniden premultiply ettiği için her damlayı beyaza
+patlatıyor. Bunun yerine `metaballFilter.ts` içinde rengi bozmayan küçük bir
+GLSL geçişi var (`smoothstep` ile eşikleme, renk aynen korunur).
+
+Blur ve displacement ekran uzayında çalıştığı için her karede kamera zoom'una
+göre yeniden ölçeklenir — böylece efekt dünya birimlerinde sabit görünür.
+
+### Sıfır harici asset
+
+Tüm dokular (damla silüeti, specular PNG karşılığı, caustics, perlin noise,
+yem, baloncuk) açılışta canvas ile üretilir; sesler WebAudio ile sentezlenir;
+isim etiketleri küçük çizilip nearest-neighbour ile büyütülerek piksel font
+görünümü elde eder. Bu sayede oyun tek bir JS+CSS paketi olarak dağıtılır.
+
+### Bot yapay zekası
+
+Her bot her karede üç kurala göre karar verir (tasarım dokümanındaki sırayla):
+yakındaki yemlere yönel, görüş alanına giren **%10 daha büyük** bir düşmandan
+kaç, yutabileceği bir kurban görürse **Jet Boost** ile saldır. Tehdit her zaman
+açlığın önüne geçer; harita kenarı da hafif bir tehdit olarak sayılır, böylece
+botlar duvara sıkışmaz. Her botun kendi saldırganlık/temkinlilik katsayısı
+vardır.
+
+### Denge ayarları
+
+Oynanışa dair bütün sayılar `src/core/config.ts` içindedir — dünya boyutu, yem
+sayısı, kütle→yarıçap ve kütle→hız eğrileri, boost bedeli/itkisi/bekleme süresi,
+bot görüş mesafesi, kamera zoom eğrisi ve reklam kuralları. Denge çalışması için
+başka dosyaya dokunmak gerekmez.
+
+---
+
+## 💰 CrazyGames Entegrasyonu
+
+`src/platform/crazygames.ts` SDK v3'ü sarmalar ve **SDK yokken de çalışır**:
+yerel geliştirmede ödüllü reklam yerine kısa bir geri sayım overlay'i gösterilir
+ve ödül yine verilir, böylece tüm ödül akışları platform dışında da test
+edilebilir.
+
+| Konum | Tür | Ödül |
+| --- | --- | --- |
+| Ölüm ekranı | Rewarded | İkinci şans: ölüm anındaki kütlenin %50'si ile dön (maç başı 1) |
+| Lobi | Rewarded | Aero Drop Boost: sonraki maça 2x kütle ile başla |
+| Mağaza | Rewarded | Kilitli renk veya çekirdek eşyayı kalıcı olarak aç |
+| Maç sonu → lobi | Interstitial | Platform kurallarına uygun bekleme süresiyle |
+
+Ödül yalnızca reklam gerçekten tamamlandığında verilir (`adFinished`); hata veya
+iptal durumunda oyuncuya bilgi mesajı gösterilir. Reklam süresince oyun sesi
+tamamen kısılır ve `gameplayStart` / `gameplayStop` sinyalleri gönderilir.
+
+---
+
+## 🚧 Proje Durumu
+
+Çekirdek oyun döngüsü oynanabilir durumda: su fiziği, Jet Boost, bot simülasyonu,
+metaball sıvı render'ı, kozmetikler, 5 dakikalık maç akışı ve reklam entegrasyonu
+uçtan uca çalışıyor.
+
+- [x] Çekirdek hareket + su fiziği
+- [x] Jet Boost (kütle bedeli, itki, cooldown)
+- [x] Bot AI (yem arama / kaçma / boost ile saldırı, kişilik dağılımı)
+- [x] Metaball sıvı render + Frutiger Aqua UI
+- [x] Kozmetikler (renk + çekirdek eşya) ve localStorage profili
+- [x] CrazyGames SDK entegrasyonu (rewarded + interstitial, yerel yedek)
+- [ ] Ek denge turu (uzun oturum verisiyle kütle eğrisi)
+- [ ] Daha fazla çekirdek eşya ve sezonluk kozmetik
+- [ ] Düşük donanım profili (filtresiz "performance" modu)
 
 ---
 
@@ -105,6 +242,9 @@ Katkı sağlamak istersen:
 1. Issue açarak önerini paylaş
 2. Fork al ve branch oluştur
 3. Pull Request gönder
+
+Kod değişikliklerinden önce `npm run build` çalıştır: tip kontrolü ve derleme
+aynı komutta yapılır.
 
 ---
 

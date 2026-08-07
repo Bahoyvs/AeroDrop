@@ -1,0 +1,142 @@
+/**
+ * Every tunable number in AeroDrop lives here so balance passes stay a
+ * one-file affair. Distances are world pixels, times are seconds.
+ */
+
+export const WORLD = {
+  width: 5200,
+  height: 5200,
+  /** Soft wall: drops get pushed back once they cross the border. */
+  wallPush: 900,
+};
+
+export const MATCH = {
+  /** A round is a short 3-5 minute session, per the design brief. */
+  durationSec: 300,
+  botCount: 26,
+  foodCount: 850,
+  /** Bots respawn so the arena never empties out mid-round. */
+  botRespawnDelay: 2.5,
+};
+
+export const MASS = {
+  start: 26,
+  min: 18,
+  max: 90000,
+  food: 1.15,
+  /** Big drops slowly bleed mass so nobody snowballs unopposed. */
+  decayAbove: 180,
+  decayPerSec: 0.006,
+  /** Predator must be this much larger (by radius) to swallow prey. */
+  eatRatio: 1.1,
+  /** How deep the predator has to overlap the prey to finish the meal. */
+  eatOverlap: 0.42,
+};
+
+export const MOVE = {
+  /** radius = sqrt(mass) * radiusScale */
+  radiusScale: 3.25,
+  baseSpeed: 340,
+  minSpeed: 112,
+  /** Speed falls off as (referenceRadius / radius) ^ speedFalloff. */
+  speedFalloff: 0.42,
+  referenceRadius: 16.6,
+  /** Water drag: how quickly velocity converges on the desired velocity. */
+  steerResponse: 7.6,
+  steerResponseFalloff: 0.18,
+  minSteerResponse: 2.4,
+  maxSteerResponse: 9.5,
+  /** Passive drag applied every frame - this is what makes it feel wet. */
+  drag: 1.35,
+  /** Deadzone (in screen px) around the cursor where the drop coasts. */
+  cursorDeadzone: 26,
+};
+
+export const BOOST = {
+  /** Fraction of current mass paid per activation. */
+  massCost: 0.03,
+  minCost: 1.4,
+  cooldown: 0.42,
+  /** Impulse velocity added toward the cursor. */
+  impulse: 640,
+  minImpulse: 240,
+  impulseFalloff: 0.28,
+  /** Ejected blob leaves at this speed, opposite the dash. */
+  ejectSpeed: 430,
+  ejectDrag: 2.1,
+  /** Own ejecta can't be re-absorbed until this many seconds have passed. */
+  ejectArmTime: 0.7,
+  /** Ejecta despawn into regular food after this long. */
+  ejectLifetime: 26,
+};
+
+export const SPAWN = {
+  /** Seconds of invulnerability after a spawn or a revive. */
+  protection: 3.4,
+  reviveProtection: 3.4,
+  /** Keep new spawns this far away from anything that could eat them. */
+  safeDistance: 320,
+  safeTries: 40,
+};
+
+export const CAMERA = {
+  /**
+   * Visible half-height in world units = base + radius * perRadius. Tuned so a
+   * fresh drop fills a comfortable ~25px on screen and a monster still fits,
+   * with the pull-back happening gradually the whole way up.
+   */
+  baseView: 180,
+  perRadius: 5.2,
+  minScale: 0.24,
+  maxScale: 1.7,
+  /** Short-axis size below which the camera starts zooming in for phones. */
+  smallScreenReference: 680,
+  /** Exponential smoothing rates. */
+  followLerp: 9,
+  zoomLerp: 2.4,
+};
+
+export const RENDER = {
+  /** Metaball tuning: blur is expressed in world units and scaled by zoom. */
+  metaBlur: 11,
+  metaBlurQuality: 3,
+  /** Alpha threshold applied after the blur (contrast, offset). */
+  metaThresholdContrast: 26,
+  metaThresholdCutoff: 0.46,
+  /** Blobs are drawn slightly fat so blur+threshold lands on the true radius. */
+  blobOversize: 1.16,
+  /** Jelly wobble. */
+  displacementScale: 9,
+  displacementDrift: 26,
+  maxLabelScale: 1.0,
+  /** Food sprites are drawn this many times their collision radius. */
+  foodDrawScale: 3.1,
+};
+
+export const BOT = {
+  /** How far a bot can perceive the world around it. */
+  vision: 620,
+  visionPerRadius: 7.5,
+  /** Danger has to be this close (relative to vision) before fleeing. */
+  fleeRange: 0.85,
+  /** Bots boost-attack prey inside this slice of their vision. */
+  attackRange: 300,
+  attackCooldown: 1.6,
+  /** Chance per second a bot re-picks a wander direction. */
+  wanderRate: 0.6,
+  /** Bots only chase prey they can comfortably out-mass. */
+  preyRatio: 1.18,
+  /** Bots avoid the map edge from this distance inward. */
+  edgeMargin: 260,
+};
+
+export const AD = {
+  /** Revives allowed per match (design doc: one). */
+  revivesPerMatch: 1,
+  /** Mass returned on revive, as a fraction of mass at death. */
+  reviveMassFactor: 0.5,
+  /** Lobby rewarded ad: start the round at double mass. */
+  startBoostFactor: 2,
+  /** CrazyGames requires a gap between interstitials. */
+  interstitialCooldownSec: 90,
+};
