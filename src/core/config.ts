@@ -23,10 +23,14 @@ export const MASS = {
   start: 26,
   min: 18,
   max: 90000,
-  food: 1.15,
+  /**
+   * Molecules are worth a real bite - roughly an eighth of a starting drop -
+   * so the early game is about getting big fast rather than grinding.
+   */
+  food: 3.2,
   /** Big drops slowly bleed mass so nobody snowballs unopposed. */
-  decayAbove: 180,
-  decayPerSec: 0.006,
+  decayAbove: 420,
+  decayPerSec: 0.0045,
   /** Predator must be this much larger (by radius) to swallow prey. */
   eatRatio: 1.1,
   /** How deep the predator has to overlap the prey to finish the meal. */
@@ -110,7 +114,57 @@ export const RENDER = {
   displacementDrift: 26,
   maxLabelScale: 1.0,
   /** Food sprites are drawn this many times their collision radius. */
-  foodDrawScale: 3.1,
+  foodDrawScale: 2.2,
+
+  /**
+   * Glass shading, all derived in the threshold shader from the blurred field,
+   * so it follows the *merged* liquid surface rather than each circle.
+   */
+  // Opacity in the middle of a drop, where you should see the water behind it.
+  centerAlpha: 0.66,
+  // Opacity at the shell, where refraction piles the light up.
+  edgeAlpha: 0.97,
+  /** How far in the shell reaches, as a fraction of the field ramp. */
+  rimDepth: 0.42,
+  /** How much the shell darkens the body colour. */
+  edgeDarken: 0.68,
+  /** Strength of the bright line riding the outer surface. */
+  rimLight: 0.3,
+
+  /** Max background displacement under a drop, in screen pixels. */
+  refractionScale: 34,
+};
+
+/**
+ * Spring-ring soft body. Each drop's outline is a ring of points held to a rest
+ * circle by springs and coupled to their neighbours, so a change of direction
+ * sends a wave travelling around the surface - the water-balloon wobble.
+ */
+export const SOFTBODY = {
+  points: 20,
+  /** Pull back to the rest circle. Higher = firmer, faster wobble. */
+  stiffness: 105,
+  /** Coupling between neighbours - this is what makes waves travel. */
+  tension: 62,
+  damping: 8.2,
+  /**
+   * How hard a change in velocity shoves the surface around. The impulse is
+   * the raw velocity delta, so this is small: a Jet Boost lands ~620px/s in a
+   * single frame, and peak deformation is roughly delta * drive / sqrt(stiffness).
+   */
+  drive: 0.0032,
+  /** Extra radial kick fired into the surface when a Jet Boost goes off. */
+  boostKick: 0.7,
+  /** Idle shimmer so a parked drop still breathes. */
+  idleAmount: 0.014,
+  idleSpeed: 2.2,
+  idleWaves: 3,
+  /** Deformation limits, as a fraction of the rest radius. */
+  minOffset: -0.24,
+  maxOffset: 0.32,
+  /** Steady-state elongation along the direction of travel. */
+  stretch: 0.19,
+  stretchSpeed: 1500,
 };
 
 export const BOT = {

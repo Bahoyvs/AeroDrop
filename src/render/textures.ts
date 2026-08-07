@@ -97,22 +97,37 @@ export function makeBlobTexture(size = 256): Texture {
 }
 
 /**
- * Specular pass: the big top-left highlight, a tight sparkle, and the bright
- * bottom rim you get when light refracts through a water droplet. Drawn in
- * white so it can sit over any body tint with an additive blend.
+ * Fades a texture out before its own boundary. The drop's silhouette is a
+ * deforming soft body, so anything baked with a hard circular edge would show
+ * up as a second, perfectly round outline sitting inside the wobbling surface.
+ * Edge treatment belongs to the threshold shader, which follows the real
+ * (and merged) surface - these sprites carry interior lighting only.
+ */
+function featherEdge(ctx: CanvasRenderingContext2D, size: number, inner = 0.55, outer = 0.9): void {
+  const r = size / 2;
+  const mask = ctx.createRadialGradient(r, r, r * inner, r, r, r * outer);
+  mask.addColorStop(0, 'rgba(255,255,255,1)');
+  mask.addColorStop(0.7, 'rgba(255,255,255,0.55)');
+  mask.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.fillStyle = mask;
+  ctx.fillRect(0, 0, size, size);
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+/**
+ * Specular pass: the broad sheen, the big top-left highlight and a tight
+ * sparkle. Drawn in white so it sits over any body tint with an additive
+ * blend, and never rotated by the renderer - the key light is fixed, which is
+ * what keeps a stretching, wobbling drop reading as glass.
  */
 export function makeGlossTexture(size = 512): Texture {
   const { c, ctx } = canvas(size);
   const r = size / 2;
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(r, r, r * 0.985, 0, Math.PI * 2);
-  ctx.clip();
-
   // Broad sheen across the upper half.
   const sheen = ctx.createLinearGradient(0, 0, 0, size);
-  sheen.addColorStop(0, 'rgba(255,255,255,0.42)');
+  sheen.addColorStop(0, 'rgba(255,255,255,0.4)');
   sheen.addColorStop(0.42, 'rgba(255,255,255,0.06)');
   sheen.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = sheen;
@@ -145,50 +160,33 @@ export function makeGlossTexture(size = 512): Texture {
   ctx.fill();
   ctx.restore();
 
-  // Refracted bottom rim - the detail that reads as "this is water".
-  const rim = ctx.createRadialGradient(r, r * 1.12, r * 0.6, r, r * 1.05, r);
-  rim.addColorStop(0, 'rgba(255,255,255,0)');
-  rim.addColorStop(0.82, 'rgba(220,250,255,0.12)');
-  rim.addColorStop(0.95, 'rgba(255,255,255,0.55)');
-  rim.addColorStop(1, 'rgba(255,255,255,0.1)');
-  ctx.fillStyle = rim;
-  ctx.fillRect(0, 0, size, size);
-
-  ctx.restore();
+  featherEdge(ctx, size, 0.5, 0.92);
   return toTexture(c);
 }
 
-/** Inner shadow + edge darkening, multiplied under the gloss for volume. */
+/**
+ * Volume shading: light pools opposite the key light, giving the drop a sense
+ * of thickness that a rim alone can't. No edge darkening - the shader owns the
+ * shell - so this can never fight the deforming silhouette.
+ */
 export function makeShadeTexture(size = 512): Texture {
   const { c, ctx } = canvas(size);
   const r = size / 2;
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(r, r, r * 0.985, 0, Math.PI * 2);
-  ctx.clip();
 
-  const inner = ctx.createRadialGradient(r, r, r * 0.5, r, r, r);
-  inner.addColorStop(0, 'rgba(2,26,46,0)');
-  inner.addColorStop(0.78, 'rgba(2,26,46,0.12)');
-  inner.addColorStop(0.96, 'rgba(2,22,40,0.42)');
-  inner.addColorStop(1, 'rgba(2,18,34,0.15)');
-  ctx.fillStyle = inner;
-  ctx.fillRect(0, 0, size, size);
-
-  // Shadow pooling opposite the key light.
   ctx.save();
-  ctx.translate(r * 1.3, r * 1.35);
-  ctx.scale(1, 0.85);
-  const pool = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.7);
-  pool.addColorStop(0, 'rgba(0,18,36,0.28)');
+  ctx.translate(r * 1.24, r * 1.3);
+  ctx.scale(1, 0.86);
+  const pool = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.82);
+  pool.addColorStop(0, 'rgba(0,18,36,0.34)');
+  pool.addColorStop(0.6, 'rgba(0,18,36,0.14)');
   pool.addColorStop(1, 'rgba(0,18,36,0)');
   ctx.fillStyle = pool;
   ctx.beginPath();
-  ctx.arc(0, 0, r * 0.7, 0, Math.PI * 2);
+  ctx.arc(0, 0, r * 0.82, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  ctx.restore();
+  featherEdge(ctx, size, 0.45, 0.88);
   return toTexture(c);
 }
 
@@ -236,34 +234,112 @@ export function makeFoodTexture(size = 96): Texture {
   return toTexture(c);
 }
 
-/** Rising background bubble: thin bright ring plus a highlight dot. */
-export function makeBubbleTexture(size = 96): Texture {
+/**
+ * Rising background bubble. A real bubble is a thin shell: almost nothing in
+ * the middle, a tight bright ring where the film turns away from the viewer, a
+ * specular dot up-left and a dimmer bounce down-right.
+ */
+export function makeBubbleTexture(size = 128): Texture {
   const { c, ctx } = canvas(size);
   const r = size / 2;
+  const edge = r * 0.94;
 
-  const fill = ctx.createRadialGradient(r, r, r * 0.2, r, r, r * 0.92);
-  fill.addColorStop(0, 'rgba(255,255,255,0.02)');
-  fill.addColorStop(0.72, 'rgba(200,240,255,0.08)');
-  fill.addColorStop(0.93, 'rgba(255,255,255,0.55)');
-  fill.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = fill;
-  ctx.beginPath();
-  ctx.arc(r, r, r * 0.92, 0, Math.PI * 2);
-  ctx.fill();
+  // Shell: transparent core, bright thin ring right at the boundary.
+  const shell = ctx.createRadialGradient(r, r, 0, r, r, edge);
+  shell.addColorStop(0, 'rgba(190,235,255,0.015)');
+  shell.addColorStop(0.6, 'rgba(190,235,255,0.03)');
+  shell.addColorStop(0.86, 'rgba(214,246,255,0.14)');
+  shell.addColorStop(0.955, 'rgba(255,255,255,0.62)');
+  shell.addColorStop(0.99, 'rgba(190,240,255,0.2)');
+  shell.addColorStop(1, 'rgba(190,240,255,0)');
+  ctx.fillStyle = shell;
+  ctx.fillRect(0, 0, size, size);
 
   ctx.save();
-  ctx.translate(r * 0.68, r * 0.62);
-  ctx.scale(1, 0.75);
-  const hi = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.22);
-  hi.addColorStop(0, 'rgba(255,255,255,0.9)');
+  ctx.beginPath();
+  ctx.arc(r, r, edge, 0, Math.PI * 2);
+  ctx.clip();
+
+  // Specular cap, up and to the left of centre.
+  ctx.save();
+  ctx.translate(r * 0.64, r * 0.56);
+  ctx.rotate(-0.5);
+  ctx.scale(1, 0.52);
+  const hi = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.3);
+  hi.addColorStop(0, 'rgba(255,255,255,0.92)');
+  hi.addColorStop(0.55, 'rgba(255,255,255,0.28)');
   hi.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = hi;
   ctx.beginPath();
-  ctx.arc(0, 0, r * 0.22, 0, Math.PI * 2);
+  ctx.arc(0, 0, r * 0.3, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
+  // Light bouncing back through the far wall.
+  ctx.save();
+  ctx.translate(r * 1.34, r * 1.36);
+  ctx.scale(1, 0.7);
+  const bounce = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 0.34);
+  bounce.addColorStop(0, 'rgba(200,244,255,0.34)');
+  bounce.addColorStop(1, 'rgba(200,244,255,0)');
+  ctx.fillStyle = bounce;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 0.34, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
   return toTexture(c);
+}
+
+/**
+ * Refraction map for one drop, in the RG-offset form DisplacementFilter wants:
+ * 128 means "no shift", and the offset points back toward the centre so the
+ * water magnifies whatever is behind it. Strength climbs toward the rim, the
+ * way it does through a real lens, and the alpha feathers out at the boundary
+ * so the sprite blends into the neutral grey map without a visible seam.
+ */
+export function makeLensTexture(size = 256): Texture {
+  const { c, ctx } = canvas(size);
+  const img = ctx.createImageData(size, size);
+  const r = size / 2;
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const i = (y * size + x) * 4;
+      const dx = (x + 0.5 - r) / r;
+      const dy = (y + 0.5 - r) / r;
+      const q = Math.hypot(dx, dy);
+
+      if (q >= 1) {
+        img.data[i] = 128;
+        img.data[i + 1] = 128;
+        img.data[i + 2] = 128;
+        img.data[i + 3] = 0;
+        continue;
+      }
+
+      // Bend hardly at all through the middle, hardest just inside the rim,
+      // then release to nothing exactly at the surface.
+      const falloff = 1 - smoothstep(0.78, 1, q);
+      const strength = Math.pow(q, 1.5) * falloff;
+      const nx = q > 0.0001 ? -(dx / q) * strength : 0;
+      const ny = q > 0.0001 ? -(dy / q) * strength : 0;
+
+      img.data[i] = Math.round(128 + 127 * nx);
+      img.data[i + 1] = Math.round(128 + 127 * ny);
+      img.data[i + 2] = 128;
+      img.data[i + 3] = Math.round(255 * (1 - smoothstep(0.93, 1, q)));
+    }
+  }
+
+  ctx.putImageData(img, 0, 0);
+  return toTexture(c);
+}
+
+function smoothstep(a: number, b: number, x: number): number {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
 }
 
 // ---------------------------------------------------------------- background
@@ -343,6 +419,7 @@ export interface TextureSet {
   glow: Texture;
   food: Texture;
   bubble: Texture;
+  lens: Texture;
   noise: Texture;
   caustics: Texture;
   depth: Texture;
@@ -357,6 +434,7 @@ export function buildTextures(): TextureSet {
     glow: makeGlowTexture(),
     food: makeFoodTexture(),
     bubble: makeBubbleTexture(),
+    lens: makeLensTexture(),
     noise: makeNoiseTexture(),
     caustics: makeCausticsTexture(),
     depth: makeDepthTexture(),

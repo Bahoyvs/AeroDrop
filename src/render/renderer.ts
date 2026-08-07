@@ -4,6 +4,7 @@ import {
   Container,
   DisplacementFilter,
   Graphics,
+  RenderTexture,
   Sprite,
   Texture,
 } from 'pixi.js';
@@ -54,6 +55,12 @@ export class GameRenderer {
   private displacementFilter!: DisplacementFilter;
   private displacementSprite!: Sprite;
 
+  /** Refraction: drop lenses are drawn to an offscreen map that warps the water. */
+  private lensLayer = new Container();
+  private lensTexture!: RenderTexture;
+  private lensSprite!: Sprite;
+  private refractionFilter!: DisplacementFilter;
+
   private pelletSprites: Sprite[] = [];
   private views = new Map<number, DropView>();
   private world: World | null = null;
@@ -98,8 +105,29 @@ export class GameRenderer {
     this.metaFilter = new MetaballFilter({
       cutoff: RENDER.metaThresholdCutoff,
       softness: 0.08,
+      centerAlpha: RENDER.centerAlpha,
+      edgeAlpha: RENDER.edgeAlpha,
+      rimDepth: RENDER.rimDepth,
+      edgeDarken: RENDER.edgeDarken,
+      rimLight: RENDER.rimLight,
     });
     this.metaLayer.filters = [this.displacementFilter, this.blurFilter, this.metaFilter];
+
+    // Refraction. Every drop stamps a lens into an offscreen map, and the
+    // background is displaced by it - so the water, caustics and bubbles
+    // behind a drop bend the way they would through real glass.
+    this.lensTexture = RenderTexture.create({
+      width: Math.max(1, this.app.screen.width),
+      height: Math.max(1, this.app.screen.height),
+      // The map is low frequency; half resolution is free quality.
+      resolution: 0.5,
+    });
+    this.lensSprite = new Sprite(this.lensTexture);
+    this.refractionFilter = new DisplacementFilter({
+      sprite: this.lensSprite,
+      scale: RENDER.refractionScale,
+    });
+    this.background.container.filters = [this.refractionFilter];
 
     this.worldLayer.addChild(
       this.borderGfx,
@@ -108,8 +136,13 @@ export class GameRenderer {
       this.overlayLayer,
       this.fx.container,
     );
-    // The displacement map is never drawn; it only needs a live transform.
-    this.app.stage.addChild(this.background.container, this.worldLayer, this.displacementSprite);
+    // The displacement sprites are never drawn; they only need live transforms.
+    this.app.stage.addChild(
+      this.background.container,
+      this.worldLayer,
+      this.displacementSprite,
+      this.lensSprite,
+    );
 
     this.drawBorder();
     this.handleResize();
@@ -120,6 +153,10 @@ export class GameRenderer {
     const { width, height } = this.app.screen;
     this.camera.resize(width, height);
     this.background.resize(width, height);
+    // The lens map is screen aligned, so it has to track the viewport exactly.
+    this.lensTexture.resize(Math.max(1, width), Math.max(1, height));
+    this.lensSprite.width = width;
+    this.lensSprite.height = height;
   }
 
   private drawBorder(): void {
@@ -166,8 +203,9 @@ export class GameRenderer {
   private addView(drop: Drop): DropView {
     const view = new DropView(this.textures, this.itemTextures);
     view.reset(drop.name);
-    this.metaLayer.addChild(view.blob);
+    this.metaLayer.addChild(view.body);
     this.overlayLayer.addChild(view.overlay);
+    this.lensLayer.addChild(view.lens);
     this.views.set(drop.id, view);
     return view;
   }
@@ -214,6 +252,31 @@ export class GameRenderer {
       this.renderPellets(this.world);
       this.renderDrops(this.world, dt, scale);
     }
+
+    this.renderLensMap(scale);
+  }
+
+  /**
+   * Stamps every visible drop's lens into the offscreen refraction map. It is
+   * cleared to neutral grey (128,128) because that is DisplacementFilter's
+   * "no shift" value - clearing to transparent black would drag the whole
+   * background half a screen sideways.
+   */
+  private renderLensMap(scale: number): void {
+    this.lensLayer.scale.set(this.worldLayer.scale.x);
+    this.lensLayer.position.copyFrom(this.worldLayer.position);
+
+    this.app.renderer.render({
+      container: this.lensLayer,
+      target: this.lensTexture,
+      clear: true,
+      clearColor: [0.5, 0.5, 0.5, 1],
+    });
+
+    // Keep the bend proportional to zoom, so a pulled-back camera doesn't
+    // smear the whole seabed.
+    this.refractionFilter.scale.x = RENDER.refractionScale * clamp(scale, 0.4, 1.2);
+    this.refractionFilter.scale.y = this.refractionFilter.scale.x;
   }
 
   private renderPellets(world: World): void {

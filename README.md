@@ -35,7 +35,8 @@ Klasik Agar.io benzeri büyüme mekaniğini; su fiziği, risk-ödül odaklı Jet
 ## ✨ Öne Çıkan Mekanikler
 
 ### 1) Kütle Büyütme Döngüsü
-- Haritadaki kaynakları topla
+- Haritadaki kaynakları topla — her molekül başlangıç kütlesinin ~%12'si
+  kadar değer taşır, yani büyümek hızlıdır
 - Daha küçük hedeflere baskı kur
 - Kütleni artırarak kontrol alanını genişlet
 
@@ -133,8 +134,9 @@ src/
     names.ts          Retro bot isimleri + oyuncu ismi temizleme
   render/
     renderer.ts       PixiJS uygulaması ve hibrit sıvı render hattı
-    metaballFilter.ts Renk koruyan alpha threshold shader'ı (metaball birleşmesi)
-    dropView.ts       Damla görseli: silüet + specular + çekirdek eşya + isim etiketi
+    softBody.ts       Yay sistemi ile jöle fiziği (deforme olan damla mesh'i)
+    metaballFilter.ts Metaball eşiği + cam gölgelendirmesi (fresnel/rim/şeffaflık)
+    dropView.ts       Damla görseli: soft-body + specular + çekirdek eşya + isim
     textures.ts       Tüm dokular runtime'da canvas ile üretilir (harici PNG yok)
     innerItems.ts     Çekirdek eşya ikonları (vektörden dokuya bake edilir)
     background.ts     Derinlik gradyanı, caustics, grid, yükselen baloncuklar
@@ -155,20 +157,47 @@ src/
 
 ### Hibrit sıvı render (3 katman)
 
-Damlalar iki ayrı katmanda çizilir:
+Her damla üç ayrı katmana dağıtılır:
 
-1. **Metaball katmanı** — her damlanın silüeti tek bir `Container` içinde toplanır
-   ve sırayla `DisplacementFilter` (jöle titremesi) → `BlurFilter` → alpha
-   threshold uygulanır. Damlalar yaklaştığında bulanık alfa alanları toplanır ve
-   eşiği aştığı yerde **sıvı köprüsü** oluşur.
-2. **Keskin katman** — specular highlight, iç gölge, çekirdek eşya ve isim
-   etiketi filtresiz olarak üstte çizilir. Işık yönü sabit kalır; damla hız
-   yönünde esnerken bile cam hissi bozulmaz.
+1. **Kırılma (refraction) katmanı** — her damla, ekran boyutunda bir offscreen
+   "lens haritasına" kendi mercek dokusunu damgalar; arka plan bu haritayla
+   `DisplacementFilter` üzerinden bükülür. Yani su, caustics ve baloncuklar
+   damlanın arkasından geçerken **büyüteç gibi kırılır**. Harita nötr griye
+   (128,128 = "kayma yok") temizlenir; şeffaf siyaha temizlenseydi tüm arka
+   plan yarım ekran kayardı.
+2. **Metaball katmanı** — damlaların silüetleri tek bir `Container` içinde
+   toplanır ve sırayla `DisplacementFilter` (mikro titreşim) → `BlurFilter` →
+   cam eşiği uygulanır. Damlalar yaklaştığında bulanık alfa alanları toplanır
+   ve eşiği aştığı yerde **sıvı köprüsü** oluşur.
+3. **Keskin katman** — specular highlight, hacim gölgesi, çekirdek eşya ve isim
+   etiketi filtresiz olarak üstte çizilir. Işık yönü **asla dönmez**; damla
+   esneyip titrerken bile parlama sabit açıda kalır, 3B su hissi bozulmaz.
 
-Threshold için PixiJS'in hazır `ColorMatrixFilter`'ı kullanılmadı: o shader
-sonucu yükseltilmiş alfa ile yeniden premultiply ettiği için her damlayı beyaza
-patlatıyor. Bunun yerine `metaballFilter.ts` içinde rengi bozmayan küçük bir
-GLSL geçişi var (`smoothstep` ile eşikleme, renk aynen korunur).
+**Jöle fiziği (soft body).** Her damlanın çevresine 20 nokta yerleştirilir.
+Her nokta yaylarla dinlenme çemberine bağlıdır, sönümlenir ve iki komşusuyla
+kuplajlıdır — bu yüzden bir darbe yüzeyde yerel bir çukur açmak yerine
+**dalga halinde çemberin etrafında dolaşır**. Damlanın hız değişimi her
+noktanın normali boyunca impuls olarak enjekte edilir: ön taraf yassılaşır,
+arka taraf şişer (hızlanırken damla/teardrop şekli). Ofsetler yarıçapın oranı
+olarak tutulduğu için minik bir damla da devasa bir damla da aynı karakterde
+titrer. Uzun karelerde yay entegrasyonu alt adımlara bölünür.
+
+**Cam gölgelendirmesi.** Threshold geçişine ulaşan bulanık alfa aslında bir
+mesafe alanıdır: yüzeyde eşik değerinde, içeride 1'e tırmanır. Shader bu tek
+değerden hem silüeti hem cam görünümünü üretir — kenarda yoğun ve koyu
+(kırılma), ortada şeffaf, ve dış yüzeyde ince parlak bir çizgi. Bu ölçüm
+**birleşmiş** alan üzerinden yapıldığı için köprü kuran iki damla tek ve
+kesintisiz bir kabuk alır; üst üste binmiş iki ayrı daire değil.
+
+PixiJS'in hazır `ColorMatrixFilter`'ı bu eşik için kullanılamadı: sonucu
+yükseltilmiş alfa ile yeniden premultiply ettiği için her damlayı beyaza
+patlatıyor. Bunun yerine `metaballFilter.ts` içinde elle yazılmış bir GLSL
+geçişi var.
+
+Aynı sebeple, damla dokularının kendi **dairesel kenarları temizlendi**: silüet
+artık deforme olan bir soft-body olduğu için, dokuya pişirilmiş sert bir çember
+kenarı titreyen yüzeyin içinde ikinci bir daire olarak görünüyordu. Kenar işi
+tamamen shader'a ait; sprite'lar yalnızca iç aydınlatmayı taşır.
 
 Blur ve displacement ekran uzayında çalıştığı için her karede kamera zoom'una
 göre yeniden ölçeklenir — böylece efekt dünya birimlerinde sabit görünür.
@@ -227,6 +256,8 @@ uçtan uca çalışıyor.
 - [x] Çekirdek hareket + su fiziği
 - [x] Jet Boost (kütle bedeli, itki, cooldown)
 - [x] Bot AI (yem arama / kaçma / boost ile saldırı, kişilik dağılımı)
+- [x] Jöle fiziği (yay sistemli soft body), metaball birleşme, cam
+      gölgelendirme ve arka plan kırılması
 - [x] Metaball sıvı render + Frutiger Aqua UI
 - [x] Kozmetikler (renk + çekirdek eşya) ve localStorage profili
 - [x] CrazyGames SDK entegrasyonu (rewarded + interstitial, yerel yedek)
