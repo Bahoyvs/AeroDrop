@@ -206,6 +206,7 @@ class CrazyGamesPlatform {
    * so callers can safely hand out the prize on that branch alone.
    */
   async showRewarded(label: string): Promise<AdResult> {
+    if (!AD.enabled) return 'reward';
     if (this.adInProgress) return 'unavailable';
     this.adInProgress = true;
     const wasPlaying = this.gameplayRunning;
@@ -228,6 +229,7 @@ class CrazyGamesPlatform {
    * times in a row doesn't spam the player (and keeps within platform rules).
    */
   async showInterstitial(): Promise<AdResult> {
+    if (!AD.enabled) return 'unavailable';
     const now = performance.now() / 1000;
     if (now - this.lastInterstitial < AD.interstitialCooldownSec) return 'unavailable';
     if (this.adInProgress) return 'unavailable';

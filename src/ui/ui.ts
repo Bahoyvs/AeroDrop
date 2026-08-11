@@ -186,7 +186,7 @@ export class Ui {
       button.type = 'button';
       button.className = 'swatch';
       button.style.setProperty('--swatch', hex(color.tint));
-      button.title = owned ? color.name : `${color.name} - watch an ad to unlock`;
+      button.title = owned ? color.name : `${color.name} - click to unlock`;
       button.setAttribute('aria-label', button.title);
       if (!owned) button.classList.add('locked');
       if (profile.value.colorId === color.id) button.classList.add('selected');
@@ -209,7 +209,7 @@ export class Ui {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'swatch item';
-      button.title = owned ? item.name : `${item.name} - watch an ad to unlock`;
+      button.title = owned ? item.name : `${item.name} - click to unlock`;
       button.setAttribute('aria-label', button.title);
       if (!owned) button.classList.add('locked');
       if (profile.value.itemId === item.id) button.classList.add('selected');
@@ -295,7 +295,7 @@ export class Ui {
 
     const tag = document.createElement('span');
     tag.className = 'shop-tag';
-    tag.textContent = owned ? 'OWNED' : 'WATCH AD';
+    tag.textContent = owned ? 'OWNED' : 'UNLOCK';
 
     card.append(label, tag);
     card.addEventListener('click', () => {

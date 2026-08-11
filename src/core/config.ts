@@ -195,6 +195,8 @@ export const BOT = {
 };
 
 export const AD = {
+  /** Set to false for basic launch without ads. */
+  enabled: false,
   /** Revives allowed per match (design doc: one). */
   revivesPerMatch: 1,
   /** Mass returned on revive, as a fraction of mass at death. */
