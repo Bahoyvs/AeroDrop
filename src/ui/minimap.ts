@@ -40,16 +40,16 @@ export class Minimap {
     const sy = size / WORLD.height;
 
     ctx.clearRect(0, 0, size, size);
-    // Radar water, matching the bright arena rather than a dark tactical map.
+    // Dark ocean tactical radar map
     const water = ctx.createLinearGradient(0, 0, 0, size);
-    water.addColorStop(0, 'rgba(196, 243, 255, 0.72)');
-    water.addColorStop(1, 'rgba(90, 199, 240, 0.72)');
+    water.addColorStop(0, 'rgba(6, 26, 44, 0.92)');
+    water.addColorStop(1, 'rgba(10, 42, 70, 0.92)');
     ctx.fillStyle = water;
     ctx.fillRect(0, 0, size, size);
 
-    // Camera viewport rectangle.
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.lineWidth = 1;
+    // Camera viewport rectangle in crisp cyan
+    ctx.strokeStyle = 'rgba(80, 220, 255, 0.85)';
+    ctx.lineWidth = 1.2;
     ctx.strokeRect(
       (camX - viewHalfW) * sx,
       (camY - viewHalfH) * sy,
@@ -59,7 +59,7 @@ export class Minimap {
 
     for (const drop of world.drops) {
       if (!drop.alive || drop.isPlayer) continue;
-      const r = Math.max(1.4, drop.radius * sx * 1.6);
+      const r = Math.max(1.8, drop.radius * sx * 1.6);
       ctx.fillStyle = colorToCss(findColor(drop.colorId).tint, 0.95);
       ctx.beginPath();
       ctx.arc(drop.x * sx, drop.y * sy, r, 0, Math.PI * 2);
@@ -68,13 +68,13 @@ export class Minimap {
 
     const player = world.player;
     if (player.alive) {
-      const r = Math.max(2.6, player.radius * sx * 1.8);
+      const r = Math.max(3.2, player.radius * sx * 1.8);
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(player.x * sx, player.y * sy, r, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = 'rgba(8, 62, 100, 0.9)';
-      ctx.lineWidth = 1.4;
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2;
       ctx.stroke();
     }
   }

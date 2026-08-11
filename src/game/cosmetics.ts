@@ -38,18 +38,16 @@ export interface InnerItem {
  * wallpaper, and every accent is close to white so the specular pass blows out.
  */
 export const DROP_COLORS: DropColor[] = [
-  // The free four have to stay legible against cyan water, so they lean away
-  // from the background hue rather than sitting on top of it.
-  { id: 'aqua', name: 'Aqua Blue', tint: 0x1e86e8, accent: 0xdcf2ff, locked: false },
-  { id: 'mint', name: 'Mint Fresh', tint: 0x46dd8f, accent: 0xdcffee, locked: false },
-  { id: 'ice', name: 'Ice Cyan', tint: 0xa8f4ff, accent: 0xffffff, locked: false },
-  { id: 'sky', name: 'Sky Glass', tint: 0x7f8cff, accent: 0xe9ecff, locked: false },
-  { id: 'neon', name: 'Neon Pink', tint: 0xff74c0, accent: 0xffe6f4, locked: true },
-  { id: 'toxic', name: 'Toxic Green', tint: 0xb4ff52, accent: 0xf1ffd8, locked: true },
-  { id: 'mercury', name: 'Mercury Grey', tint: 0xcdd9e6, accent: 0xffffff, locked: true },
-  { id: 'sunburst', name: 'Sunburst', tint: 0xffb340, accent: 0xfff0d4, locked: true },
-  { id: 'violet', name: 'Deep Violet', tint: 0xaf78ff, accent: 0xefe2ff, locked: true },
-  { id: 'ember', name: 'Ember Red', tint: 0xff6f5a, accent: 0xffe0d9, locked: true },
+  { id: 'aqua', name: 'Aqua Blue', tint: 0x00b4ff, accent: 0xe0f7ff, locked: false },
+  { id: 'mint', name: 'Mint Fresh', tint: 0x00e68a, accent: 0xe0fff2, locked: false },
+  { id: 'ice', name: 'Ice Cyan', tint: 0x54e4ff, accent: 0xffffff, locked: false },
+  { id: 'sky', name: 'Sky Glass', tint: 0x6e85ff, accent: 0xebf0ff, locked: false },
+  { id: 'neon', name: 'Neon Pink', tint: 0xff4da6, accent: 0xffe6f4, locked: true },
+  { id: 'toxic', name: 'Toxic Green', tint: 0xa2ff14, accent: 0xf1ffd8, locked: true },
+  { id: 'mercury', name: 'Mercury Silver', tint: 0xd0e0f0, accent: 0xffffff, locked: true },
+  { id: 'sunburst', name: 'Sunburst Gold', tint: 0xffa000, accent: 0xfff0d4, locked: true },
+  { id: 'violet', name: 'Deep Violet', tint: 0xa052ff, accent: 0xefe2ff, locked: true },
+  { id: 'ember', name: 'Ember Red', tint: 0xff4d36, accent: 0xffe0d9, locked: true },
 ];
 
 export const INNER_ITEMS: InnerItem[] = [

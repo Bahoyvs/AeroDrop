@@ -224,19 +224,25 @@ export function makeGlowTexture(size = 256): Texture {
   return toTexture(c);
 }
 
-/** Glossy little food orb: body, highlight, and a faint dark rim. */
+/** Glossy little food orb: body, highlight, and a crisp dark rim. */
 export function makeFoodTexture(size = 96): Texture {
   const { c, ctx } = canvas(size);
   const r = size / 2;
 
-  const body = ctx.createRadialGradient(r * 0.75, r * 0.7, r * 0.1, r, r, r * 0.94);
+  // Dark contrast rim to ensure orbs are crisp against any background
+  ctx.fillStyle = 'rgba(2, 16, 28, 0.45)';
+  ctx.beginPath();
+  ctx.arc(r, r, r * 0.96, 0, Math.PI * 2);
+  ctx.fill();
+
+  const body = ctx.createRadialGradient(r * 0.75, r * 0.7, r * 0.1, r, r, r * 0.92);
   body.addColorStop(0, 'rgba(255,255,255,0.98)');
-  body.addColorStop(0.45, 'rgba(255,255,255,0.72)');
-  body.addColorStop(0.86, 'rgba(255,255,255,0.42)');
+  body.addColorStop(0.45, 'rgba(255,255,255,0.78)');
+  body.addColorStop(0.86, 'rgba(255,255,255,0.5)');
   body.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = body;
   ctx.beginPath();
-  ctx.arc(r, r, r * 0.94, 0, Math.PI * 2);
+  ctx.arc(r, r, r * 0.92, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.save();
@@ -416,12 +422,10 @@ export function makeCausticsTexture(size = 512): Texture {
   const img = ctx.createImageData(size, size);
   for (let i = 0; i < size * size; i++) {
     const ridge = 1 - Math.abs(n[i]! * 2 - 1);
-    // A high exponent leaves only the thin bright crests, which is what reads
-    // as light refracting through a surface rather than as a web of lightning
-    // across the whole screen.
-    const a = Math.pow(ridge, 13) * 320;
-    img.data[i * 4 + 0] = 255;
-    img.data[i * 4 + 1] = 255;
+    // Softer caustics multiplier (180 instead of 320) to prevent blown-out white glare
+    const a = Math.pow(ridge, 13) * 180;
+    img.data[i * 4 + 0] = 200;
+    img.data[i * 4 + 1] = 240;
     img.data[i * 4 + 2] = 255;
     img.data[i * 4 + 3] = Math.min(255, Math.round(a));
   }
@@ -430,22 +434,18 @@ export function makeCausticsTexture(size = 512): Texture {
 }
 
 /**
- * The sky column behind everything. Not a depth gradient into darkness any
- * more: this is the Vista wallpaper read, sunlit water at the top rolling down
- * into saturated tropical turquoise, and it never gets anywhere near black.
- *
- * It also never gets anywhere near white. The arena has to stay a mid-value
- * field, because the drops are the bright objects in this scene and they have
- * nothing to read against if the water is already blown out.
+ * The deep ocean water column. Rich, eye-soothing aquatic blue gradient that
+ * eliminates screen glare while providing vibrant contrast for all food orbs,
+ * player drops, and UI elements.
  */
 export function makeDepthTexture(height = 512): Texture {
   const { c, ctx } = canvas(4, height);
   const g = ctx.createLinearGradient(0, 0, 0, height);
-  g.addColorStop(0, '#8fe6ff');
-  g.addColorStop(0.16, '#63d3f9');
-  g.addColorStop(0.42, '#31b9ef');
-  g.addColorStop(0.7, '#1c9fdd');
-  g.addColorStop(1, '#1187cb');
+  g.addColorStop(0, '#0c2e4e');
+  g.addColorStop(0.2, '#0c365c');
+  g.addColorStop(0.5, '#0e416f');
+  g.addColorStop(0.8, '#0b2f52');
+  g.addColorStop(1, '#061b30');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 4, height);
   return toTexture(c);
@@ -454,7 +454,7 @@ export function makeDepthTexture(height = 512): Texture {
 /** Faint grid used to sell motion across the open water. */
 export function makeGridTexture(size = 256): Texture {
   const { c, ctx } = canvas(size);
-  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+  ctx.strokeStyle = 'rgba(100, 200, 255, 0.14)';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(0.5, 0);

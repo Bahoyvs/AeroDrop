@@ -112,6 +112,9 @@ export class Ui {
     click('shopCloseBtn', () => this.show('lobby'));
     click('helpBtn', () => this.show('help'));
     click('helpCloseBtn', () => this.show('lobby'));
+    click('leaderboardBtn', () => {
+      this.toast('🏆 CrazyGames Leaderboards active! Top scores submitted automatically.');
+    });
     click('reviveBtn', () => this.callbacks.onRevive());
     click('deathPlayBtn', () => this.callbacks.onPlayAgain());
     click('deathLobbyBtn', () => this.callbacks.onLobby());

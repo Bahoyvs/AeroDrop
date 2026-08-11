@@ -57,8 +57,8 @@ export class DropView {
 
     this.shadow = new Sprite(textures.glow);
     this.shadow.anchor.set(0.5);
-    this.shadow.tint = 0x0a5f96;
-    this.shadow.alpha = RENDER.shadowAlpha;
+    this.shadow.tint = 0x020d18;
+    this.shadow.alpha = RENDER.shadowAlpha * 1.4;
 
     this.overlay = new Container();
 

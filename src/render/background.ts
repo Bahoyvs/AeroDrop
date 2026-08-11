@@ -142,8 +142,8 @@ export class Background {
       -camera.x * 0.55 * camera.scale - time * 11,
       -camera.y * 0.55 * camera.scale + Math.sin(time * 0.13) * 120,
     );
-    this.causticsA.alpha = 0.11 + Math.sin(time * 0.5) * 0.03;
-    this.causticsB.alpha = 0.06 + Math.cos(time * 0.37) * 0.022;
+    this.causticsA.alpha = 0.05 + Math.sin(time * 0.5) * 0.015;
+    this.causticsB.alpha = 0.03 + Math.cos(time * 0.37) * 0.01;
 
     // Shafts slide gently sideways and breathe, as if the surface above them
     // were rippling. Vertical tiling stays pinned so the baked fade holds.
@@ -151,7 +151,7 @@ export class Background {
       -camera.x * 0.18 * camera.scale + Math.sin(time * 0.07) * 60 + time * 4,
       0,
     );
-    this.beams.alpha = 0.18 + Math.sin(time * 0.23) * 0.05;
+    this.beams.alpha = 0.08 + Math.sin(time * 0.23) * 0.02;
 
     // The grid tracks the world exactly, so it doubles as a speed reference.
     const cell = 256 * camera.scale;

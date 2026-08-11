@@ -28,12 +28,20 @@ export function labelTexture(text: string): Texture {
   const cached = cache.get(text);
   if (cached) return cached;
 
-  const width = Math.max(8, Math.ceil(measure(text))) + PAD * 2;
+  const textWidth = Math.max(8, Math.ceil(measure(text)));
+  const width = textWidth + PAD * 3;
   const c = document.createElement('canvas');
   c.width = width;
   c.height = HEIGHT;
   const ctx = c.getContext('2d');
   if (!ctx) return Texture.EMPTY;
+
+  // Dark semi-transparent pill backdrop for guaranteed contrast against water & pellets
+  ctx.fillStyle = 'rgba(3, 18, 32, 0.78)';
+  const radius = 6;
+  ctx.beginPath();
+  ctx.roundRect(1, 1, width - 2, HEIGHT - 2, radius);
+  ctx.fill();
 
   ctx.font = FONT;
   ctx.textAlign = 'center';
@@ -41,10 +49,9 @@ export function labelTexture(text: string): Texture {
   ctx.lineJoin = 'round';
   ctx.miterLimit = 2;
 
-  // A deep marine outline rather than black: pure black is the one value that
-  // never appears anywhere else in this palette and it shows.
-  ctx.lineWidth = 3.5;
-  ctx.strokeStyle = 'rgba(5,52,86,0.94)';
+  // Deep dark stroke + crisp white fill
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(1, 10, 20, 0.95)';
   ctx.strokeText(text, width / 2, HEIGHT / 2 + 0.5);
 
   ctx.fillStyle = '#ffffff';

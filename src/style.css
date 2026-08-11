@@ -4,9 +4,9 @@
    ========================================================================== */
 
 :root {
-  --aqua-100: #f4feff;
-  --aqua-200: #d6f7ff;
-  --aqua-300: #92f0ff;
+  --aqua-100: #e8f8ff;
+  --aqua-200: #b8ebff;
+  --aqua-300: #70d8ff;
   --aqua-400: #3ec8ff;
   --aqua-500: #1a9fe0;
   --aqua-600: #0f7cc4;
@@ -17,32 +17,28 @@
   --danger: #ff6b6b;
   --gold: #ffb340;
 
-  /* Ink, not paper: the panels are bright, so type has to go dark. This is the
-     Vista/Win7 rule - frosted light chrome with deep blue text on it. */
-  --ink: #0a4a76;
-  --ink-soft: #1d6d9e;
-  --ink-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+  /* High contrast white and icy blue text over dark frosted glass */
+  --ink: #ffffff;
+  --ink-soft: #a0cce8;
+  --ink-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
 
-  /* Aero glass: white and translucent, with the hard mid-line that separates
-     the glossy upper half from the matte lower half, and a curved bulge of
-     highlight over the top. The bulge is a background layer rather than a
-     pseudo-element so it can never wash out the text sitting on the panel. */
+  /* Frosted dark ocean glass */
   --glass-bg: radial-gradient(
       132% 80% at 50% -16%,
-      rgba(255, 255, 255, 0.95) 0%,
-      rgba(255, 255, 255, 0.5) 45%,
-      rgba(255, 255, 255, 0) 66%
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.04) 45%,
+      rgba(0, 0, 0, 0) 66%
     ),
     linear-gradient(
       to bottom,
-      rgba(255, 255, 255, 0.8) 0%,
-      rgba(238, 252, 255, 0.58) 47%,
-      rgba(176, 229, 250, 0.52) 48%,
-      rgba(214, 243, 254, 0.7) 100%
+      rgba(12, 38, 62, 0.88) 0%,
+      rgba(10, 32, 54, 0.82) 47%,
+      rgba(6, 22, 38, 0.85) 48%,
+      rgba(8, 28, 48, 0.92) 100%
     );
-  --glass-border: rgba(255, 255, 255, 0.9);
-  --glass-shadow: 0 18px 44px rgba(9, 74, 118, 0.34), 0 1px 0 rgba(255, 255, 255, 0.95) inset,
-    0 -12px 24px rgba(150, 214, 244, 0.35) inset, 0 0 0 1px rgba(80, 168, 214, 0.25);
+  --glass-border: rgba(100, 210, 255, 0.38);
+  --glass-shadow: 0 18px 44px rgba(2, 12, 22, 0.65), 0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 -12px 24px rgba(10, 40, 70, 0.4) inset, 0 0 0 1px rgba(0, 0, 0, 0.4);
 
   --font-ui: 'Segoe UI', Tahoma, Verdana, Geneva, 'DejaVu Sans', sans-serif;
 }
@@ -58,7 +54,7 @@ body {
   padding: 0;
   height: 100%;
   overflow: hidden;
-  background: #5cd6fb;
+  background: #071b2e;
   color: var(--ink);
   font-family: var(--font-ui);
   overscroll-behavior: none;
@@ -82,8 +78,7 @@ body {
   height: 100%;
 }
 
-/* Sun bloom + a faint scanline, straight out of 2004. The vignette lifts the
-   corners instead of darkening them - an overexposed lens, not a dark room. */
+/* Subtle vignette around screen edges to focus eyes on playfield */
 #vignette {
   position: absolute;
   inset: 0;
@@ -91,18 +86,11 @@ body {
   background:
     radial-gradient(
       ellipse at 50% -10%,
-      rgba(255, 255, 255, 0.42) 0%,
-      rgba(255, 255, 255, 0.1) 32%,
-      rgba(255, 255, 255, 0) 60%
+      rgba(100, 210, 255, 0.15) 0%,
+      rgba(100, 210, 255, 0.05) 32%,
+      rgba(0, 0, 0, 0) 60%
     ),
-    radial-gradient(ellipse at 50% 44%, rgba(255, 255, 255, 0) 46%, rgba(21, 132, 189, 0.26) 100%),
-    repeating-linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.05) 0px,
-      rgba(255, 255, 255, 0.05) 1px,
-      rgba(0, 0, 0, 0) 1px,
-      rgba(0, 0, 0, 0) 3px
-    );
+    radial-gradient(ellipse at 50% 44%, rgba(0, 0, 0, 0) 50%, rgba(2, 10, 18, 0.45) 100%);
   z-index: 2;
 }
 
@@ -117,15 +105,13 @@ body {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  /* Frosted enough to read a menu over, sheer enough that the attract-mode
-     arena still moves behind it. Frosting toward white, never toward black. */
   background: radial-gradient(
     ellipse at 50% 38%,
-    rgba(255, 255, 255, 0.44),
-    rgba(140, 214, 245, 0.62)
+    rgba(6, 24, 42, 0.65),
+    rgba(3, 14, 25, 0.85)
   );
-  backdrop-filter: blur(4px) saturate(135%);
-  -webkit-backdrop-filter: blur(4px) saturate(135%);
+  backdrop-filter: blur(6px) saturate(135%);
+  -webkit-backdrop-filter: blur(6px) saturate(135%);
   overflow-y: auto;
 }
 
@@ -192,13 +178,13 @@ body {
   font-size: 22px;
   letter-spacing: 3px;
   font-weight: 700;
-  color: #0b5288;
-  text-shadow: var(--ink-shadow), 0 0 20px rgba(255, 255, 255, 0.9);
+  color: #70d8ff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 20px rgba(112, 216, 255, 0.4);
 }
 
 .window-title.danger {
-  color: #c8324a;
-  text-shadow: var(--ink-shadow), 0 0 20px rgba(255, 255, 255, 0.85);
+  color: #ff526c;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 82, 108, 0.4);
 }
 
 .window-sub {
@@ -219,25 +205,21 @@ body {
   font-weight: 700;
   letter-spacing: -1px;
   line-height: 1;
-  /* Glossy chrome type: light cap, hard break at the midline, deep blue lower
-     half. The 2007 logo treatment, more or less exactly. The cap stops short
-     of white on purpose - the panel behind it is white, and a white-topped
-     wordmark simply loses its upper half. */
-  background: linear-gradient(to bottom, #8ddcff 0%, #35b3ee 43%, #0d6fae 44%, #084f7d 100%);
+  background: linear-gradient(to bottom, #ffffff 0%, #70d8ff 43%, #1a9fe0 44%, #0b6cb5 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.95))
-    drop-shadow(0 4px 10px rgba(8, 78, 122, 0.35));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8))
+    drop-shadow(0 4px 12px rgba(10, 80, 140, 0.6));
 }
 
 /* The gradient text-fill would swallow this; give it a solid colour back. */
 .logo-io {
   font-size: 0.42em;
   vertical-align: super;
-  color: #0d6fae;
-  -webkit-text-fill-color: #0d6fae;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #70d8ff;
+  -webkit-text-fill-color: #70d8ff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
   letter-spacing: 0;
 }
 
@@ -272,17 +254,17 @@ body {
   padding: 11px 14px;
   font: inherit;
   font-size: 15px;
-  color: #04283f;
-  background: linear-gradient(to bottom, #ffffff, #f2fbff 55%, #dff4ff);
-  border: 1px solid rgba(120, 194, 232, 0.75);
+  color: #ffffff;
+  background: linear-gradient(to bottom, #0c2b48, #081e34);
+  border: 1px solid rgba(100, 210, 255, 0.45);
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(20, 100, 150, 0.22) inset, 0 1px 0 rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) inset, 0 1px 0 rgba(255, 255, 255, 0.15);
   outline: none;
 }
 
 .aqua-input:focus {
-  border-color: rgba(62, 200, 255, 0.9);
-  box-shadow: 0 0 0 3px rgba(146, 240, 255, 0.75), 0 2px 6px rgba(20, 100, 150, 0.22) inset;
+  border-color: rgba(112, 216, 255, 0.95);
+  box-shadow: 0 0 0 3px rgba(112, 216, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.5) inset;
 }
 
 /* ---------------------------------------------------------------- buttons */
@@ -465,6 +447,24 @@ body {
 
 .best-line strong {
   color: var(--ink);
+}
+
+.leaderboard-badge-line {
+  margin-top: 8px;
+  font-size: 10.5px;
+  letter-spacing: 0.5px;
+  color: #70d8ff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+.leaderboard-badge-line span {
+  font-weight: 700;
+  color: #ffd700;
+}
+
+.leaderboard-badge-line small {
+  font-size: 9.5px;
+  color: var(--ink-soft);
 }
 
 .swatch-row {
@@ -705,8 +705,8 @@ body {
 .stat-value {
   font-size: 22px;
   font-weight: 700;
-  color: #0b5288;
-  text-shadow: var(--ink-shadow), 0 0 14px rgba(255, 255, 255, 0.8);
+  color: #70d8ff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 14px rgba(112, 216, 255, 0.4);
 }
 
 .boost-panel {
@@ -725,8 +725,8 @@ body {
 .boost-meter {
   height: 9px;
   border-radius: 999px;
-  background: rgba(122, 190, 224, 0.55);
-  box-shadow: 0 2px 5px rgba(12, 84, 130, 0.4) inset, 0 1px 0 rgba(255, 255, 255, 0.7);
+  background: rgba(10, 40, 70, 0.7);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6) inset, 0 1px 0 rgba(255, 255, 255, 0.2);
   overflow: hidden;
 }
 
@@ -734,7 +734,7 @@ body {
   height: 100%;
   width: 100%;
   border-radius: 999px;
-  background: linear-gradient(to bottom, #eaffd6, #7ade4a 55%, #3fae28);
+  background: linear-gradient(to bottom, #c8ffa8, #7ade4a 55%, #3fae28);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
   transition: width 0.06s linear;
 }
@@ -769,13 +769,13 @@ body {
 .timer-value {
   font-size: 20px;
   font-weight: 700;
-  color: #0b5288;
+  color: #70d8ff;
   font-variant-numeric: tabular-nums;
-  text-shadow: var(--ink-shadow);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
 }
 
 .timer-value.urgent {
-  color: #c8324a;
+  color: #ff526c;
   animation: pulse 1s ease-in-out infinite;
 }
 
@@ -804,15 +804,15 @@ body {
   padding: 0;
   list-style: none;
   font-size: 11.5px;
-  color: var(--ink);
+  color: #ffffff;
 }
 
 .board-list li {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  padding: 2px 0;
-  border-bottom: 1px solid rgba(19, 116, 170, 0.16);
+  padding: 3px 4px;
+  border-bottom: 1px solid rgba(100, 200, 255, 0.12);
 }
 
 .board-list li:last-child {
@@ -821,7 +821,7 @@ body {
 
 .board-list .rank {
   width: 18px;
-  color: var(--ink-soft);
+  color: #a0cce8;
   font-variant-numeric: tabular-nums;
 }
 
@@ -833,18 +833,19 @@ body {
 }
 
 .board-list .mass {
-  color: var(--ink-soft);
+  color: #a0cce8;
   font-variant-numeric: tabular-nums;
 }
 
 .board-list li.me {
-  background: linear-gradient(to right, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+  background: linear-gradient(to right, rgba(0, 180, 255, 0.28), rgba(0, 180, 255, 0.05));
   border-radius: 6px;
 }
 
 .board-list li.me .name {
-  color: #0b5288;
+  color: #ffd700;
   font-weight: 700;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
 .board-list.final {
@@ -862,7 +863,7 @@ body {
   width: 132px;
   height: 132px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(12, 84, 130, 0.45) inset, 0 0 0 1px rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.75) inset, 0 0 0 1px rgba(100, 210, 255, 0.4);
 }
 
 .boost-btn {

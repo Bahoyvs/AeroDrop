@@ -204,3 +204,15 @@ export const AD = {
   /** CrazyGames requires a gap between interstitials. */
   interstitialCooldownSec: 90,
 };
+
+export const LEADERBOARD = {
+  /** CrazyGames 32-byte base64 encryption key. Replace with game key from Developer Portal. */
+  encryptionKey: 'dGhpcyBpcyBhIDMyLWJ5dGUga2V5IGZvciB0ZXN0aW4=',
+  scoreLabel: 'POINTS' as const,
+  scoreSorting: 'DESC' as const,
+  minValue: 0,
+  maxValue: 500000,
+  cooldownSeconds: 10,
+  isIncremental: false,
+  guide: 'Endless Mode - Grow your drop as big as possible',
+};

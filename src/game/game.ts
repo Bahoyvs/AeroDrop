@@ -120,7 +120,7 @@ export class Game {
     this.renderer.attachWorld(world);
   }
 
-  /** Round over by the clock: show standings, then an interstitial on exit. */
+  /** Round over by the clock: show standings, submit score, then interstitial. */
   private finishMatch(): void {
     if (!this.world || this.phase === 'finished') return;
     this.phase = 'finished';
@@ -134,6 +134,7 @@ export class Game {
 
     this.ui.showResults(rank, this.world.leaderboard(8));
     this.ui.refreshStats();
+    void this.submitLeaderboard(mass);
   }
 
   /** Called when the player leaves the results screen. */
@@ -143,6 +144,13 @@ export class Game {
     await platform.showInterstitial();
     if (next === 'again') this.startMatch();
     else this.returnToLobby();
+  }
+
+  private async submitLeaderboard(mass: number): Promise<void> {
+    const result = await platform.submitLeaderboardScore(mass);
+    if (result.success) {
+      this.ui.toast(`Leaderboard score submitted: ${result.score} pts!`);
+    }
   }
 
   // ----------------------------------------------------------------- events
@@ -181,6 +189,7 @@ export class Game {
     sfx.death();
     platform.gameplayStop();
     this.ui.showDeath(killer.name, victim.mass, this.world?.playerRank() ?? 1, this.revivesLeft);
+    void this.submitLeaderboard(victim.mass);
   }
 
   // -------------------------------------------------------------------- ads

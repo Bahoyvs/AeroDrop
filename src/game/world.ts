@@ -95,8 +95,19 @@ export class World {
     const px = x ?? rng.range(24, WORLD.width - 24);
     const py = y ?? rng.range(24, WORLD.height - 24);
     const hue = rng.next();
+    // High-contrast, ultra-vivid food pellet palette for instant legibility
     const tint =
-      hue < 0.34 ? 0x8ef0ff : hue < 0.62 ? 0xa8ffd8 : hue < 0.85 ? 0xbfe4ff : 0xfff3b0;
+      hue < 0.20
+        ? 0xffd000 // Golden Yellow
+        : hue < 0.38
+        ? 0xff3366 // Coral Pink
+        : hue < 0.56
+        ? 0x00e676 // Emerald Green
+        : hue < 0.72
+        ? 0xff6d00 // Vivid Orange
+        : hue < 0.88
+        ? 0xb039ff // Electric Violet
+        : 0x00e5ff; // Cyan Spark
     const pellet = makePellet({
       x: px,
       y: py,

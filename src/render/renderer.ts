@@ -71,7 +71,7 @@ export class GameRenderer {
     await this.app.init({
       resizeTo: host,
       antialias: true,
-      background: 0x5cd6fb,
+      background: 0x071b2e,
       // The metaball threshold is a hand-written GLSL filter, and the brief
       // targets WebGL, so pin the backend instead of letting WebGPU win.
       preference: 'webgl',
@@ -169,25 +169,21 @@ export class GameRenderer {
     const g = this.borderGfx;
     g.clear();
 
-    // Everything outside the arena washes out into bright haze. The background
-    // is drawn in screen space, so without this the water past the wall looks
-    // identical to the playfield and the boundary reads as a stray line.
-    // Fogging out rather than darkening keeps the scene high-key throughout.
+    // Deep oceanic darkness outside the arena boundary.
     const pad = 6000;
-    const outside = 0xf2ffff;
-    const alpha = 0.62;
+    const outside = 0x030f1c;
+    const alpha = 0.78;
     g.rect(-pad, -pad, WORLD.width + pad * 2, pad).fill({ color: outside, alpha });
     g.rect(-pad, WORLD.height, WORLD.width + pad * 2, pad).fill({ color: outside, alpha });
     g.rect(-pad, 0, pad, WORLD.height).fill({ color: outside, alpha });
     g.rect(WORLD.width, 0, pad, WORLD.height).fill({ color: outside, alpha });
 
-    // Three concentric strokes make a glassy Aero bezel: a saturated core
-    // between a white outer highlight and a white inner one.
+    // Concentric glassy bezel
     const inset = 6;
     g.roundRect(0, 0, WORLD.width, WORLD.height, 54);
-    g.stroke({ width: 26, color: 0xffffff, alpha: 0.75 });
+    g.stroke({ width: 26, color: 0xffffff, alpha: 0.65 });
     g.roundRect(inset, inset, WORLD.width - inset * 2, WORLD.height - inset * 2, 48);
-    g.stroke({ width: 10, color: 0x21a9e8, alpha: 0.55 });
+    g.stroke({ width: 10, color: 0x1a86c4, alpha: 0.7 });
     g.roundRect(inset * 3, inset * 3, WORLD.width - inset * 6, WORLD.height - inset * 6, 40);
     g.stroke({ width: 3, color: 0xffffff, alpha: 0.85 });
   }
