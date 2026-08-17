@@ -125,7 +125,7 @@ src/
     math.ts           clamp / lerp / frame-rate bağımsız damp / format yardımcıları
     rng.ts            Deterministik mulberry32 PRNG
   game/
-    world.ts          Simülasyon: fizik, çarpışma, yem grid'i, spawn, leaderboard
+    world.ts          Simülasyon: fizik, çarpışma, yem grid'i, spawn
     entities.ts       Drop / Pellet veri modelleri
     bot.ts            Steering AI (yem ara / kaç / boost ile saldır)
     game.ts           Maç akışı; simülasyon, render, UI ve reklamlar arasındaki tutkal

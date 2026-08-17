@@ -177,7 +177,7 @@ export class Background {
       bubble.sprite.height = bubble.size;
       
       if (bubble.isSparkle) {
-        bubble.sprite.alpha = 0.3 + bubble.parallax * 0.4;
+        bubble.sprite.alpha = 0.07 + bubble.parallax * 0.11;
       } else {
         bubble.sprite.alpha = 0.08 + bubble.parallax * 0.15;
       }

@@ -45,14 +45,12 @@
             <span class="timer-value" id="hudTimer">5:00</span>
           </div>
         </div>
-
         <div class="hud-top-right">
           <div class="glass panel board-panel">
             <div class="board-title">LEADERBOARD</div>
             <ol class="board-list" id="leaderboard"></ol>
           </div>
         </div>
-
         <div class="hud-bottom-left">
           <div class="glass panel minimap-panel">
             <canvas id="minimap" width="132" height="132"></canvas>
@@ -117,7 +115,6 @@
           <div class="lobby-footer">
             <button class="aqua-btn small" id="shopBtn" type="button">SHOP</button>
             <button class="aqua-btn small" id="helpBtn" type="button">HOW TO PLAY</button>
-            <button class="aqua-btn small" id="leaderboardBtn" type="button">LEADERBOARD</button>
             <button class="aqua-btn small icon" id="muteBtn" type="button" aria-label="Toggle sound">
               <span id="muteIcon">&#9835;</span>
             </button>
@@ -126,9 +123,6 @@
           <div class="best-line">
             Best mass <strong id="bestMass">0</strong> &middot; Best rank
             <strong id="bestRank">-</strong> &middot; Rounds <strong id="gamesPlayed">0</strong>
-          </div>
-          <div class="leaderboard-badge-line">
-            🏆 <span>CrazyGames Weekly Leaderboard Active</span> &middot; <small>Endless Mode: Grow your drop as big as possible</small>
           </div>
         </div>
       </div>
@@ -144,7 +138,7 @@
             <li><strong>Jet Boost</strong> &mdash; Space, right click, or double tap. Dashes you forward and
               throws 3% of your mass out behind you. Use it to catch prey or to escape.</li>
             <li><strong>Weight</strong> &mdash; the bigger you get, the slower and heavier you move.</li>
-            <li><strong>Round</strong> &mdash; five minutes. Finish as high on the leaderboard as you can.</li>
+            <li><strong>Round</strong> &mdash; five minutes. Finish with as high rank as you can.</li>
           </ul>
           <button class="aqua-btn primary" id="helpCloseBtn" type="button">GOT IT</button>
         </div>
@@ -201,6 +195,7 @@
             <span class="result-rank-value" id="resultRank">#1</span>
           </div>
           <ol class="board-list final" id="resultBoard"></ol>
+
           <div class="result-actions">
             <button class="aqua-btn primary big" id="resultPlayBtn" type="button">PLAY AGAIN</button>
             <button class="aqua-btn small" id="resultLobbyBtn" type="button">LOBBY</button>

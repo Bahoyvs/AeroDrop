@@ -5,7 +5,13 @@ export function radiusForMass(mass: number): number {
   return Math.sqrt(mass) * MOVE.radiusScale;
 }
 
+export type BotPersonality = 'aggressive' | 'defensive' | 'noob' | 'tactical' | 'sneaky' | 'apex';
+
 export interface BotBrain {
+  personality: BotPersonality;
+  badge: string;
+  tag: string;
+  isRival?: boolean;
   /** Current wander heading, used when nothing interesting is nearby. */
   wanderAngle: number;
   attackCooldown: number;
@@ -18,6 +24,7 @@ export interface BotBrain {
   targetX: number;
   targetY: number;
   boostIntent: boolean;
+  misfireTimer?: number;
 }
 
 export interface Drop {

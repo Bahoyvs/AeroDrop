@@ -206,9 +206,10 @@ export class DropView {
       this.label.visible = false;
     } else {
       this.label.visible = true;
-      if (this.labelName !== drop.name) {
-        this.labelName = drop.name;
-        this.label.texture = labelTexture(drop.name);
+      const labelText = drop.brain ? `${drop.brain.badge} ${drop.name}` : drop.name;
+      if (this.labelName !== labelText) {
+        this.labelName = labelText;
+        this.label.texture = labelTexture(labelText);
       }
       // Pick the on-screen size first, snap it to a half-pixel step, then
       // convert back to world units - that keeps the nearest-neighbour

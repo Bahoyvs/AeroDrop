@@ -134,7 +134,6 @@ export class Game {
 
     this.ui.showResults(rank, this.world.leaderboard(8));
     this.ui.refreshStats();
-    void this.submitLeaderboard(mass);
   }
 
   /** Called when the player leaves the results screen. */
@@ -146,12 +145,7 @@ export class Game {
     else this.returnToLobby();
   }
 
-  private async submitLeaderboard(mass: number): Promise<void> {
-    const result = await platform.submitLeaderboardScore(mass);
-    if (result.success) {
-      this.ui.toast(`Leaderboard score submitted: ${result.score} pts!`);
-    }
-  }
+
 
   // ----------------------------------------------------------------- events
 
@@ -172,11 +166,14 @@ export class Game {
     // The killfeed belongs to the HUD; attract mode has no reader.
     if (this.phase !== 'playing' && this.phase !== 'dead') return;
 
+    const killerBadge = killer.brain?.badge;
+    const victimBadge = victim.brain?.badge;
+
     if (killer.isPlayer || victim.isPlayer) {
-      this.ui.addKill(killer.name, victim.name, killer.isPlayer);
+      this.ui.addKill(killer.name, victim.name, killer.isPlayer, killerBadge, victimBadge);
     } else if (victim.mass > 220) {
       // Only surface bot-on-bot kills when they're actually notable.
-      this.ui.addKill(killer.name, victim.name, false);
+      this.ui.addKill(killer.name, victim.name, false, killerBadge, victimBadge);
     }
 
     if (!victim.isPlayer) return;
@@ -188,8 +185,8 @@ export class Game {
     this.phase = 'dead';
     sfx.death();
     platform.gameplayStop();
-    this.ui.showDeath(killer.name, victim.mass, this.world?.playerRank() ?? 1, this.revivesLeft);
-    void this.submitLeaderboard(victim.mass);
+    const killerDisplayName = killerBadge ? `${killerBadge} ${killer.name}` : killer.name;
+    this.ui.showDeath(killerDisplayName, victim.mass, this.world?.playerRank() ?? 1, this.revivesLeft);
   }
 
   // -------------------------------------------------------------------- ads

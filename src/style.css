@@ -449,23 +449,7 @@ body {
   color: var(--ink);
 }
 
-.leaderboard-badge-line {
-  margin-top: 8px;
-  font-size: 10.5px;
-  letter-spacing: 0.5px;
-  color: #70d8ff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
-}
 
-.leaderboard-badge-line span {
-  font-weight: 700;
-  color: #ffd700;
-}
-
-.leaderboard-badge-line small {
-  font-size: 9.5px;
-  color: var(--ink-soft);
-}
 
 .swatch-row {
   display: flex;
@@ -1144,7 +1128,7 @@ body {
 }
 
 @media (max-width: 620px) {
-  /* The centred timer collides with the stat and leaderboard panels on a
+  /* The centred timer collides with the stat panel on a
      phone, so it moves down between the minimap and the boost button. */
   .hud-top-center {
     top: auto;

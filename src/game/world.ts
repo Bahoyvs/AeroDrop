@@ -32,6 +32,7 @@ export interface LeaderboardRow {
   mass: number;
   isPlayer: boolean;
   rank: number;
+  badge?: string;
 }
 
 const GRID_CELL = 160;
@@ -75,11 +76,29 @@ export class World {
     });
     this.drops.push(this.player);
 
-    for (let i = 0; i < MATCH.botCount; i++) this.spawnBot(this.botNames[i]!);
-    // Give bots a spread of starting sizes so there's always prey and predators.
+    const types: import('./entities').BotPersonality[] = [
+      'apex',
+      'apex',
+      'apex',
+      'aggressive',
+      'aggressive',
+      'tactical',
+      'tactical',
+      'sneaky',
+      'defensive',
+      'noob',
+    ];
+
+    for (let i = 0; i < MATCH.botCount; i++) {
+      const type = types[i % types.length];
+      this.spawnBot(this.botNames[i]!, type);
+    }
+
+    // Give bots a spread of starting sizes so there's always real prey and predators.
     for (const bot of this.drops) {
       if (bot.isPlayer) continue;
-      this.setMass(bot, MASS.start * rng.range(0.7, 2.5));
+      const sizeMult = bot.brain?.personality === 'apex' ? rng.range(3.0, 6.5) : rng.range(0.8, 2.8);
+      this.setMass(bot, MASS.start * sizeMult);
     }
 
     // Place the player last, once the bots exist and their sizes are settled -
@@ -124,7 +143,7 @@ export class World {
     this.addToGrid(pellet);
   }
 
-  private spawnBot(name: string): Drop {
+  private spawnBot(name: string, personality?: import('./entities').BotPersonality): Drop {
     const pos = this.findSafeSpot(radiusForMass(MASS.start));
     const bot = makeDrop({
       name,
@@ -134,7 +153,7 @@ export class World {
       colorId: rng.pick(BOT_COLOR_IDS),
       itemId: rng.chance(0.55) ? rng.pick(['star', 'bubble', 'smiley', 'disc'] as const) : 'none',
       protection: SPAWN.protection,
-      brain: makeBrain(),
+      brain: makeBrain(personality),
     });
     bot.radius = radiusForMass(bot.mass);
     this.drops.push(bot);
@@ -239,6 +258,17 @@ export class World {
         const vision = BOT.vision + drop.radius * BOT.visionPerRadius;
         const nearby = this.queryPellets(drop.x, drop.y, Math.min(vision, 620));
         updateBot(drop, dt, this.drops, nearby);
+
+        // Smart off-screen background farming so top bots stay competitive
+        const farmRate =
+          drop.brain.personality === 'apex'
+            ? 12
+            : drop.brain.personality === 'aggressive'
+            ? 7
+            : drop.brain.personality === 'tactical'
+            ? 5
+            : 3;
+        this.setMass(drop, drop.mass + farmRate * dt * 0.45);
       }
 
       this.applyBoost(drop, dt);
@@ -270,8 +300,6 @@ export class World {
     let ay = drop.aimY;
     const len = Math.hypot(ax, ay);
     if (len < 0.001) {
-      // No aim yet (e.g. keyboard-only boost before the mouse moved): reuse
-      // the current heading so the dash still goes somewhere sensible.
       const speed = Math.hypot(drop.vx, drop.vy);
       if (speed < 1) return;
       ax = drop.vx / speed;
@@ -284,7 +312,6 @@ export class World {
     this.setMass(drop, drop.mass - cost);
     drop.boostCooldown = BOOST.cooldown;
     drop.boostFlash = 1;
-    // Boosting is a commitment: it drops spawn protection immediately.
     drop.protection = 0;
 
     const impulse = clamp(
@@ -295,8 +322,6 @@ export class World {
     drop.bvx += ax * impulse;
     drop.bvy += ay * impulse;
 
-    // The price of the dash is flung out behind you - the risk half of the
-    // risk/reward loop, and free food for whoever is chasing.
     const spawnDist = drop.radius + radiusForMass(cost) + 4;
     const pellet = makePellet({
       x: drop.x - ax * spawnDist,
@@ -326,7 +351,6 @@ export class World {
     const targetVx = (drop.aimX / dirLen) * maxSpeed * throttle;
     const targetVy = (drop.aimY / dirLen) * maxSpeed * throttle;
 
-    // Heavier drops accelerate more slowly: the "thick, full" feel.
     const response = clamp(
       MOVE.steerResponse * (MOVE.referenceRadius / drop.radius) ** MOVE.steerResponseFalloff,
       MOVE.minSteerResponse,
@@ -335,7 +359,6 @@ export class World {
     drop.vx = damp(drop.vx, targetVx, response, dt);
     drop.vy = damp(drop.vy, targetVy, response, dt);
 
-    // Boost velocity is a separate, faster-decaying layer.
     const decay = Math.exp(-MOVE.drag * 2.6 * dt);
     drop.bvx *= decay;
     drop.bvy *= decay;
@@ -343,8 +366,6 @@ export class World {
     drop.x += (drop.vx + drop.bvx) * dt;
     drop.y += (drop.vy + drop.bvy) * dt;
 
-    // Soft walls: push back instead of hard-clamping, so hitting the edge
-    // feels like drifting into a current rather than a brick wall.
     const r = drop.radius;
     if (drop.x < r) {
       drop.x = damp(drop.x, r, 12, dt);
@@ -374,7 +395,7 @@ export class World {
       if (dist2(drop.x, drop.y, pellet.x, pellet.y) > limit * limit) continue;
       this.setMass(drop, drop.mass + pellet.mass);
       drop.score += pellet.mass;
-      pellet.mass = -1; // tombstone; swept in updatePellets
+      pellet.mass = -1;
       this.events.onFood?.(pellet, drop);
     }
   }
@@ -397,7 +418,6 @@ export class World {
         pellet.x = clamp(pellet.x + pellet.vx * dt, 4, WORLD.width - 4);
         pellet.y = clamp(pellet.y + pellet.vy * dt, 4, WORLD.height - 4);
         if (pellet.life <= 0) {
-          // Stale ejecta settles into ordinary food rather than vanishing.
           pellet.ejecta = false;
           pellet.life = Infinity;
           pellet.vx = 0;
@@ -413,7 +433,6 @@ export class World {
   }
 
   private topUpFood(dt: number): void {
-    // Slow trickle keeps density stable even while ejecta is in flight.
     if (this.pellets.length < MATCH.foodCount && rng.chance(dt * 6)) this.spawnFood();
   }
 
@@ -443,7 +462,6 @@ export class World {
         }
 
         if (victim.protection > 0 || predator.protection > 0) continue;
-        // The predator has to actually cover the victim, not just touch it.
         const limit = predator.radius - victim.radius * MASS.eatOverlap;
         if (d2 > limit * limit) continue;
 
@@ -469,6 +487,20 @@ export class World {
 
   private respawnBot(bot: Drop): void {
     const spot = this.findSafeSpot(radiusForMass(MASS.start));
+
+    // Dynamic Respawn Mass Scaling based on overall leader mass
+    let maxLeaderMass = MASS.start;
+    for (const d of this.drops) {
+      if (d.alive && d.mass > maxLeaderMass) maxLeaderMass = d.mass;
+    }
+
+    const isApex = bot.brain?.personality === 'apex' || rng.chance(0.22);
+    const personality: import('./entities').BotPersonality = isApex ? 'apex' : bot.brain?.personality ?? 'aggressive';
+
+    const respawnMass = isApex
+      ? MASS.start + maxLeaderMass * rng.range(0.35, 0.75)
+      : MASS.start + maxLeaderMass * rng.range(0.12, 0.40);
+
     bot.alive = true;
     bot.x = spot.x;
     bot.y = spot.y;
@@ -479,8 +511,8 @@ export class World {
     bot.protection = SPAWN.protection;
     bot.score = 0;
     bot.colorId = rng.pick(BOT_COLOR_IDS);
-    bot.brain = makeBrain();
-    this.setMass(bot, MASS.start * rng.range(0.9, 1.8));
+    bot.brain = makeBrain(personality);
+    this.setMass(bot, respawnMass);
   }
 
   // -------------------------------------------------------------- reporting
@@ -488,7 +520,13 @@ export class World {
   leaderboard(limit = 10): LeaderboardRow[] {
     const rows = this.drops
       .filter((d) => d.alive)
-      .map((d) => ({ name: d.name, mass: d.mass, isPlayer: d.isPlayer, rank: 0 }))
+      .map((d) => ({
+        name: d.name,
+        mass: d.mass,
+        isPlayer: d.isPlayer,
+        rank: 0,
+        badge: d.brain?.badge,
+      }))
       .sort((a, b) => b.mass - a.mass);
     rows.forEach((row, i) => (row.rank = i + 1));
     return rows.slice(0, limit);

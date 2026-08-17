@@ -1,4 +1,4 @@
-import { AD, LEADERBOARD } from '../core/config';
+import { AD } from '../core/config';
 import { sfx } from '../audio/sfx';
 
 /**
@@ -42,30 +42,7 @@ declare global {
   }
 }
 
-/**
- * Client-side AES-GCM score encryption per official CrazyGames Leaderboard SDK docs.
- */
-export async function encryptScore(score: number, encryptionKey: string): Promise<string> {
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  const algorithm = { name: 'AES-GCM', iv: iv };
 
-  const keyBytes = new Uint8Array(
-    atob(encryptionKey)
-      .split('')
-      .map((c) => c.charCodeAt(0)),
-  );
-
-  const cryptoKey = await window.crypto.subtle.importKey('raw', keyBytes, algorithm, false, ['encrypt']);
-
-  const dataBuffer = new TextEncoder().encode(score.toString());
-  const encryptedBuffer = await window.crypto.subtle.encrypt(algorithm, cryptoKey, dataBuffer);
-
-  const combined = new Uint8Array(iv.length + encryptedBuffer.byteLength);
-  combined.set(iv);
-  combined.set(new Uint8Array(encryptedBuffer), iv.length);
-
-  return btoa(String.fromCharCode(...combined));
-}
 
 export type AdResult = 'reward' | 'error' | 'unavailable';
 
@@ -159,45 +136,7 @@ class CrazyGamesPlatform {
     this.sdk?.game.happytime();
   }
 
-  // ------------------------------------------------------------- leaderboard
 
-  private lastLeaderboardSubmit = -Infinity;
-
-  /**
-   * Submits a player's score to CrazyGames Leaderboards.
-   * Encrypts the score using AES-GCM and enforces cooldown interval.
-   */
-  async submitLeaderboardScore(score: number): Promise<{ success: boolean; score: number; encryptedScore?: string; message?: string }> {
-    const finalScore = Math.floor(score);
-    if (!Number.isFinite(finalScore) || finalScore < LEADERBOARD.minValue || finalScore > LEADERBOARD.maxValue) {
-      return { success: false, score: finalScore, message: 'Score out of allowed bounds' };
-    }
-
-    const now = performance.now() / 1000;
-    if (now - this.lastLeaderboardSubmit < LEADERBOARD.cooldownSeconds) {
-      return { success: false, score: finalScore, message: 'Leaderboard submission cooldown' };
-    }
-    this.lastLeaderboardSubmit = now;
-
-    try {
-      const encryptedScore = await encryptScore(finalScore, LEADERBOARD.encryptionKey);
-      
-      if (this.sdk?.user?.submitScore) {
-        await this.sdk.user.submitScore({
-          encryptedScore,
-          score: finalScore,
-        });
-        console.log('[AeroDrop] [CrazyGames SDK] Score submitted to Leaderboard:', { score: finalScore, encryptedScore });
-      } else {
-        console.log('[AeroDrop] [CrazyGames Standalone] Encrypted score simulated:', { score: finalScore, encryptedScore });
-      }
-
-      return { success: true, score: finalScore, encryptedScore };
-    } catch (error) {
-      console.error('[AeroDrop] Error submitting score to CrazyGames Leaderboard:', error);
-      return { success: false, score: finalScore, message: error instanceof Error ? error.message : 'Encryption error' };
-    }
-  }
 
   // -------------------------------------------------------------------- ads
 

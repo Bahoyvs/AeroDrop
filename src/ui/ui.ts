@@ -112,9 +112,6 @@ export class Ui {
     click('shopCloseBtn', () => this.show('lobby'));
     click('helpBtn', () => this.show('help'));
     click('helpCloseBtn', () => this.show('lobby'));
-    click('leaderboardBtn', () => {
-      this.toast('🏆 CrazyGames Leaderboards active! Top scores submitted automatically.');
-    });
     click('reviveBtn', () => this.callbacks.onRevive());
     click('deathPlayBtn', () => this.callbacks.onPlayAgain());
     click('deathLobbyBtn', () => this.callbacks.onLobby());
@@ -339,7 +336,7 @@ export class Ui {
 
       const name = document.createElement('span');
       name.className = 'name';
-      name.textContent = row.name;
+      name.textContent = row.badge ? `${row.badge} ${row.name}` : row.name;
 
       const mass = document.createElement('span');
       mass.className = 'mass';
@@ -350,15 +347,17 @@ export class Ui {
     }
   }
 
+
+
   /** Names come from player input, so the feed is built as text nodes only. */
-  addKill(killer: string, victim: string, byPlayer: boolean): void {
+  addKill(killer: string, victim: string, byPlayer: boolean, killerBadge?: string, victimBadge?: string): void {
     const node = document.createElement('div');
     node.className = `kill${byPlayer ? ' self' : ''}`;
 
     const killerEl = document.createElement('strong');
-    killerEl.textContent = killer;
+    killerEl.textContent = killerBadge ? `${killerBadge} ${killer}` : killer;
     const victimEl = document.createElement('strong');
-    victimEl.textContent = victim;
+    victimEl.textContent = victimBadge ? `${victimBadge} ${victim}` : victim;
 
     node.append(killerEl, document.createTextNode(' absorbed '), victimEl);
     this.killfeed.appendChild(node);

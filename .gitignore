@@ -5,3 +5,4 @@ dist-zip/
 .DS_Store
 .vite/
 *.log
+*.zip

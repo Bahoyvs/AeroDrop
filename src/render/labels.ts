@@ -7,7 +7,7 @@ import { toTexture } from './textures';
  * the design doc - white fill, thin black outline - without shipping a font.
  */
 
-const FONT = 'bold 13px Tahoma, Verdana, Geneva, "DejaVu Sans", sans-serif';
+const FONT = 'bold 13px Tahoma, Verdana, Geneva, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
 const PAD = 5;
 const HEIGHT = 20;
 
